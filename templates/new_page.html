@@ -1,19 +1,41 @@
 {% extends "base.html" %}
+
 {% block content %}
-  <h2>Create New Page</h2>
-  <form method="POST">
-    <input type="text" name="title" placeholder="Page Title" required>
+<h2 class="mb-4">New Page in "{{ book.title }}"</h2>
+
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label">Title</label>
+    <input type="text" name="title" class="form-control" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Icon</label>
+    <select name="icon" class="form-select">
+      <option value="📄">📄 Document</option>
+      <option value="📘">📘 Book</option>
+      <option value="📝">📝 Notes</option>
+      <option value="📚">📚 Library</option>
+      <option value="⭐">⭐ Star</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Content</label>
     <textarea id="summernote" name="content"></textarea>
-    <button type="submit">Save Page</button>
-  </form>
-  <button onclick="window.location.href='{{ url_for('view_book', book_id=book_id) }}'">Back</button>
-{% block scripts %}
-  <script>
-    $(document).ready(function() {
-      $('#summernote').summernote({
-        height: 300
-      });
-    });
-  </script>
+  </div>
+
+  <button class="btn btn-primary">Create Page</button>
+  <a href="{{ url_for('view_book', book_id=book._id) }}" class="btn btn-secondary">Back to Book</a>
+</form>
 {% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function() {
+    $('#summernote').summernote({
+      height: 300
+    });
+  });
+</script>
 {% endblock %}

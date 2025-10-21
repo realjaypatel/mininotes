@@ -1,7 +1,42 @@
 {% extends "base.html" %}
+
 {% block content %}
-  <h2>{{ page.title }}</h2>
-  <div>{{ page.content|safe }}</div>
-  <button onclick="window.location.href='{{ url_for('edit_page', book_id=book_id, page_id=page.id) }}'">Edit</button>
-  <button onclick="window.location.href='{{ url_for('view_book', book_id=book_id) }}'">Back</button>
+<h2 class="mb-3">{{ page.icon }} {{ page.title }}</h2>
+<p class="text-muted mb-4">Book: {{ book.title }}</p>
+
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label">Title</label>
+    <input type="text" name="title" class="form-control" value="{{ page.title }}" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Icon</label>
+    <select name="icon" class="form-select">
+      <option value="📄" {% if page.icon=="📄" %}selected{% endif %}>📄 Document</option>
+      <option value="📘" {% if page.icon=="📘" %}selected{% endif %}>📘 Book</option>
+      <option value="📝" {% if page.icon=="📝" %}selected{% endif %}>📝 Notes</option>
+      <option value="📚" {% if page.icon=="📚" %}selected{% endif %}>📚 Library</option>
+      <option value="⭐" {% if page.icon=="⭐" %}selected{% endif %}>⭐ Star</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Content</label>
+    <textarea id="summernote" name="content">{{ page.content }}</textarea>
+  </div>
+
+  <button class="btn btn-primary">Save Changes</button>
+  <a href="{{ url_for('view_book', book_id=book._id) }}" class="btn btn-secondary">Back to Book</a>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function() {
+    $('#summernote').summernote({
+      height: 300
+    });
+  });
+</script>
 {% endblock %}

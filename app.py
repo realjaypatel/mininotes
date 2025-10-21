@@ -1,32 +1,56 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, session, url_for
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "supersecret"
+app.secret_key = "supersecretkey"
 
-# -------------------------
-# In-memory "database"
-# -------------------------
-users = {}  # username: password
+# MongoDB connection
+client = MongoClient("mongodb+srv://user:user@cluster0.u3fdtma.mongodb.net/md")
+db = client.md
+users_col = db.users
+books_col = db.books
 
-# Each book has: title, categories: {category_name: [pages]}
-books = {}
-# Page structure: {"id": int, "title": str, "content": str, "book_id": int, "category": str}
-next_page_id = 1
-next_book_id = 1
+# -------------------
+# ROUTES
+# -------------------
 
-# -------------------------
-# Authentication
-# -------------------------
+@app.route("/")
+def home():
+    if 'user' in session:
+        user = session['user']
+        # Fetch only the user's books
+        books = list(books_col.find({"user": user}))
+        all_pages = []
+        for book in books:
+            for page in book.get("pages", []):
+                all_pages.append({
+                    "title": page["title"],
+                    "icon": page.get("icon", "📄"),
+                    "book_title": book["title"],
+                    "book_id": str(book["_id"]),
+                    "page_id": page["id"]
+                })
+        return render_template("home.html", books=books, all_pages=all_pages)
+    else:
+        # Non-logged-in users see public landing page
+        return render_template("public_home.html")
+
+# -------------------
+# REGISTER / LOGIN
+# -------------------
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form["username"]
-        password = request.form["password"]
-        if username in users:
-            return "User already exists!"
-        users[username] = password
-        session["user"] = username
-        return redirect(url_for("home"))
+        password = generate_password_hash(request.form["password"])
+        if users_col.find_one({"username": username}):
+            return "User already exists"
+        users_col.insert_one({"username": username, "password": password})
+        session['user'] = username
+        return redirect(url_for('home'))
     return render_template("register.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -34,108 +58,73 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        if username in users and users[username] == password:
-            session["user"] = username
-            return redirect(url_for("home"))
-        return "Invalid credentials!"
+        user = users_col.find_one({"username": username})
+        if user and check_password_hash(user["password"], password):
+            session['user'] = username
+            return redirect(url_for('home'))
+        else:
+            return "Invalid credentials"
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
-    return redirect(url_for("login"))
+    session.pop('user', None)
+    return redirect(url_for('home'))
 
-# -------------------------
-# Home & Books
-# -------------------------
-@app.route("/")
-def home():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    return render_template("home.html", books=books)
+# -------------------
+# BOOKS & PAGES
+# -------------------
 
 @app.route("/book/new", methods=["GET", "POST"])
 def new_book():
-    global next_book_id
-    if "user" not in session:
-        return redirect(url_for("login"))
+    if 'user' not in session:
+        return redirect(url_for('login'))
     if request.method == "POST":
         title = request.form["title"]
-        # For simplicity, each new book starts with a default category
-        books[next_book_id] = {"title": title, "categories": {"General": []}}
-        next_book_id += 1
-        return redirect(url_for("home"))
+        books_col.insert_one({
+            "title": title,
+            "user": session['user'],
+            "pages": []
+        })
+        return redirect(url_for('home'))
     return render_template("new_book.html")
 
-@app.route("/book/<int:book_id>")
+@app.route("/book/<book_id>")
 def view_book(book_id):
-    if "user" not in session:
-        return redirect(url_for("login"))
-    book = books.get(book_id)
-    if not book:
-        return "Book not found!"
-    return render_template("view_book.html", book=book, book_id=book_id)
+    book = books_col.find_one({"_id": ObjectId(book_id)})
+    return render_template("view_book.html", book=book)
 
-# -------------------------
-# Pages
-# -------------------------
-@app.route("/book/<int:book_id>/page/new", methods=["GET", "POST"])
+@app.route("/book/<book_id>/page/new", methods=["GET", "POST"])
 def new_page(book_id):
-    global next_page_id
-    if "user" not in session:
-        return redirect(url_for("login"))
-    book = books.get(book_id)
-    if not book:
-        return "Book not found!"
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    book = books_col.find_one({"_id": ObjectId(book_id)})
     if request.method == "POST":
         title = request.form["title"]
         content = request.form["content"]
-        category = request.form.get("category", "General")
-        page = {"id": next_page_id, "title": title, "content": content, "book_id": book_id, "category": category}
-        next_page_id += 1
-        # Add page to category
-        if category not in book["categories"]:
-            book["categories"][category] = []
-        book["categories"][category].append(page)
-        return redirect(url_for("view_book", book_id=book_id))
-    return render_template("new_page.html", book_id=book_id, book=book)
+        icon = request.form.get("icon", "📄")
+        page_id = str(ObjectId())
+        page = {"id": page_id, "title": title, "content": content, "icon": icon}
+        books_col.update_one({"_id": ObjectId(book_id)}, {"$push": {"pages": page}})
+        return redirect(url_for('view_book', book_id=book_id))
+    return render_template("new_page.html", book=book)
 
-@app.route("/book/<int:book_id>/page/<int:page_id>")
+@app.route("/book/<book_id>/page/<page_id>", methods=["GET", "POST"])
 def view_page(book_id, page_id):
-    if "user" not in session:
-        return redirect(url_for("login"))
-    book = books.get(book_id)
-    if not book:
-        return "Book not found!"
-    for category_pages in book["categories"].values():
-        for page in category_pages:
-            if page["id"] == page_id:
-                return render_template("view_page.html", page=page, book_id=book_id)
-    return "Page not found!"
-
-@app.route("/book/<int:book_id>/page/<int:page_id>/edit", methods=["GET", "POST"])
-def edit_page(book_id, page_id):
-    if "user" not in session:
-        return redirect(url_for("login"))
-    book = books.get(book_id)
-    if not book:
-        return "Book not found!"
-    page_to_edit = None
-    for category_pages in book["categories"].values():
-        for page in category_pages:
-            if page["id"] == page_id:
-                page_to_edit = page
-                break
-    if not page_to_edit:
-        return "Page not found!"
+    book = books_col.find_one({"_id": ObjectId(book_id)})
+    page = next((p for p in book.get("pages", []) if p["id"] == page_id), None)
     if request.method == "POST":
-        page_to_edit["title"] = request.form["title"]
-        page_to_edit["content"] = request.form["content"]
-        return redirect(url_for("view_page", book_id=book_id, page_id=page_id))
-    return render_template("new_page.html", page=page_to_edit, book_id=book_id, book=book)
+        page["title"] = request.form["title"]
+        page["content"] = request.form["content"]
+        page["icon"] = request.form.get("icon", "📄")
+        # Save back
+        books_col.update_one({"_id": ObjectId(book_id)}, {"$set": {"pages": book["pages"]}})
+        return redirect(url_for('view_page', book_id=book_id, page_id=page_id))
+    return render_template("view_page.html", book=book, page=page)
 
-# -------------------------
-# Run App
-# -------------------------
+# -------------------
+# RUN APP
+# -------------------
+
 if __name__ == "__main__":
     app.run(debug=True)
