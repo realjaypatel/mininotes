@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>New Book</h2>
+<form method="POST">
+  <input type="text" name="title" placeholder="Book Title" required>
+  <button type="submit">Create Book</button>
+</form>
+<button class="btn-secondary" onclick="window.location.href='{{ url_for('home') }}'">Back</button>
+{% endblock %}

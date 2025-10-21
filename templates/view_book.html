@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>{{ book.title }}</h2>
+  <ul class="list-group">
+    {% for category, pages in book.categories.items() %}
+      <li class="list-group-item">
+        <h3>{{ category }}</h3>
+        <ul>
+          {% for page in pages %}
+            <li>{{ page.title }}</li>
+          {% endfor %}
+        </ul>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}
