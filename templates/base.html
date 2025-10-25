@@ -5,16 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ title or "Docs MVP" }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-icons/dist/lucide.min.js">
   <style>
-    /* Custom scrollbar hidden for sidebar */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900" x-data="{ sidebarOpen: false }">
 
 <div class="flex min-h-screen">
+
+  <!-- Mobile sidebar overlay -->
+  <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/25 z-20 transition-opacity lg:hidden"></div>
 
   <!-- Sidebar -->
   {% include 'doc_sidebar.html' %}
@@ -22,6 +25,11 @@
   <!-- Main content -->
   <main class="flex-1">
     <div class="container mx-auto py-6 lg:py-10 max-w-4xl">
+      <!-- Mobile toggle button -->
+      <button @click="sidebarOpen = true" class="lg:hidden mb-4 px-4 py-2 bg-slate-900 text-white rounded-md shadow hover:bg-slate-800">
+        ☰ Menu
+      </button>
+
       {% block content %}{% endblock %}
     </div>
   </main>
