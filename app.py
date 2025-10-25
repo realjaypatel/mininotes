@@ -207,6 +207,38 @@ def edit_org(org_id):
 
     return render_template("org_form.html", action="Edit", org=org_data)
 
+# ---------- SPACE CREATE / EDIT ----------
+@app.route("/<org>/space/new", methods=["GET", "POST"])
+def new_space(org):
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
+    if request.method == "POST":
+        name = request.form["name"]
+        mongo.db.spaces.insert_one({"org": org, "name": name})
+        return redirect(url_for("view_org", org=org))
+    
+    return render_template("space_form.html", action="New", org=org, space=None)
+
+
+@app.route("/<org>/space/<space_id>/edit", methods=["GET", "POST"])
+def edit_space(org, space_id):
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    from bson import ObjectId
+    space_data = mongo.db.spaces.find_one({"_id": ObjectId(space_id)})
+    if not space_data:
+        return "Space not found", 404
+
+    if request.method == "POST":
+        new_name = request.form["name"]
+        mongo.db.spaces.update_one({"_id": space_data["_id"]}, {"$set": {"name": new_name}})
+        return redirect(url_for("view_org", org=org))
+
+    return render_template("space_form.html", action="Edit", org=org, space=space_data)
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
