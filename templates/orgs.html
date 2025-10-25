@@ -1,13 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Your Organizations</h2>
-<ul>
-    {% for org in orgs %}
-    <li><a href="{{ url_for('view_org', org=org.name) }}">{{ org.name }}</a></li>
-    {% endfor %}
-</ul>
-<form method="POST" action="{{ url_for('create_org') }}">
-    <input type="text" name="name" placeholder="New organization name">
-    <button type="submit">Create</button>
-</form>
+<div class="card p-5">
+  <h3 class="fw-semibold mb-4">Your Organizations</h3>
+
+  <form action="{{ url_for('create_org') }}" method="POST" class="d-flex mb-4">
+    <input type="text" name="name" placeholder="New Organization Name" class="form-control me-2" required>
+    <button class="btn btn-dark">Create</button>
+  </form>
+
+
+    <ul class="list-group list-group-flush">
+      {% for org in orgs %}
+        <li class="list-group-item">
+          <a href="{{ url_for('view_org', org=org.name) }}" class="fw-medium">{{ org.name }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+</div>
 {% endblock %}

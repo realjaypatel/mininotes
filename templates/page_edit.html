@@ -1,11 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ action }} Page</h2>
-<form method="POST">
+<div class="card p-5">
+  <h4 class="fw-semibold mb-4">{{ action }} Page</h4>
+
+  <form method="POST">
     {% if action == "New" %}
-    <input type="text" name="title" placeholder="Page Title"><br>
+    <div class="mb-3">
+      <label class="form-label">Title</label>
+      <input type="text" name="title" class="form-control" required>
+    </div>
     {% endif %}
-    <textarea name="content" rows="10" cols="50">{{ page.content if page else '' }}</textarea><br>
-    <button type="submit">{{ action }}</button>
-</form>
+
+    <div class="mb-3">
+      <label class="form-label">Content</label>
+      <textarea name="content" class="form-control" rows="10">{{ page.content if page else '' }}</textarea>
+    </div>
+    <button class="btn btn-dark">{{ action }}</button>
+  </form>
+</div>
 {% endblock %}

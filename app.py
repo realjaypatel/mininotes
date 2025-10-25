@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-app.config["MONGO_URI"] = "mongodb://localhost:27017/confluence_clone"
+app.config["MONGO_URI"] = "mongodb+srv://user:user@cluster0.u3fdtma.mongodb.net/md1"
 mongo = PyMongo(app)
 
 # ---------- AUTH ----------
