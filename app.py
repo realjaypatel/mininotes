@@ -1,130 +1,228 @@
-from flask import Flask, render_template, request, redirect, session, url_for
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+from flask import Flask, render_template, request, redirect, url_for, session
+from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
+from bson import ObjectId
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+app.secret_key = "secretkey"
+app.config["MONGO_URI"] = "mongodb+srv://user:user@cluster0.u3fdtma.mongodb.net/md3"
 
-# MongoDB connection
-client = MongoClient("mongodb+srv://user:user@cluster0.u3fdtma.mongodb.net/md")
-db = client.md
-users_col = db.users
-books_col = db.books
+mongo = PyMongo(app)
 
-# -------------------
-# ROUTES
-# -------------------
-
-@app.route("/")
-def home():
-    if 'user' in session:
-        user = session['user']
-        # Fetch only the user's books
-        books = list(books_col.find({"user": user}))
-        all_pages = []
-        for book in books:
-            for page in book.get("pages", []):
-                all_pages.append({
-                    "title": page["title"],
-                    "icon": page.get("icon", "📄"),
-                    "book_title": book["title"],
-                    "book_id": str(book["_id"]),
-                    "page_id": page["id"]
-                })
-        return render_template("home.html", books=books, all_pages=all_pages)
-    else:
-        # Non-logged-in users see public landing page
-        return render_template("public_home.html")
-
-# -------------------
-# REGISTER / LOGIN
-# -------------------
+# ------------------ AUTH ------------------
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        password = generate_password_hash(request.form["password"])
-        if users_col.find_one({"username": username}):
-            return "User already exists"
-        users_col.insert_one({"username": username, "password": password})
-        session['user'] = username
-        return redirect(url_for('home'))
+        email = request.form["email"]
+        password = request.form["password"]
+        if mongo.db.users.find_one({"email": email}):
+            return "User already exists!"
+        hashed = generate_password_hash(password)
+        mongo.db.users.insert_one({"email": email, "password": hashed})
+        return redirect(url_for("login"))
     return render_template("register.html")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
+        email = request.form["email"]
         password = request.form["password"]
-        user = users_col.find_one({"username": username})
+        user = mongo.db.users.find_one({"email": email})
         if user and check_password_hash(user["password"], password):
-            session['user'] = username
-            return redirect(url_for('home'))
-        else:
-            return "Invalid credentials"
+            session["user_id"] = str(user["_id"])
+            return redirect(url_for("dashboard"))
+        return "Invalid credentials!"
     return render_template("login.html")
+
 
 @app.route("/logout")
 def logout():
-    session.pop('user', None)
-    return redirect(url_for('home'))
+    session.clear()
+    return redirect(url_for("login"))
 
-# -------------------
-# BOOKS & PAGES
-# -------------------
+# ------------------ DASHBOARD ------------------
 
-@app.route("/book/new", methods=["GET", "POST"])
-def new_book():
-    if 'user' not in session:
-        return redirect(url_for('login'))
+@app.route("/")
+def dashboard():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user = mongo.db.users.find_one({"_id": ObjectId(session["user_id"])})
+    user_email = user.get("email")
+    # Get orgs where user is owner or listed in users
+    orgs = list(mongo.db.organizations.find({
+        "$or": [
+            {"user_id": session["user_id"]},
+            {"users": user_email}
+        ]
+    }))
+    return render_template("dashboard.html", orgs=orgs)
+
+
+@app.route("/add_org", methods=["GET", "POST"])
+def add_org():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
     if request.method == "POST":
-        title = request.form["title"]
-        books_col.insert_one({
-            "title": title,
-            "user": session['user'],
-            "pages": []
+        name = request.form["name"]
+        users = request.form.get("users", "")
+        mongo.db.organizations.insert_one({
+            "user_id": session["user_id"],  # owner
+            "name": name,
+            "users": [email.strip() for email in users.split(",") if email.strip()]
         })
-        return redirect(url_for('home'))
-    return render_template("new_book.html")
+        return redirect(url_for("dashboard"))
+    return render_template("new_org.html")
 
-@app.route("/book/<book_id>")
-def view_book(book_id):
-    book = books_col.find_one({"_id": ObjectId(book_id)})
-    return render_template("view_book.html", book=book)
 
-@app.route("/book/<book_id>/page/new", methods=["GET", "POST"])
-def new_page(book_id):
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    book = books_col.find_one({"_id": ObjectId(book_id)})
+@app.route("/<org_id>/edit_org", methods=["GET", "POST"])
+def edit_org(org_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org:
+        return "Organization not found", 404
+
+    if request.method == "POST":
+        name = request.form["name"]
+        users = request.form.get("users", "")
+        mongo.db.organizations.update_one(
+            {"_id": ObjectId(org_id)},
+            {"$set": {
+                "name": name,
+                "users": [email.strip() for email in users.split(",") if email.strip()]
+            }}
+        )
+        return redirect(url_for("dashboard"))
+
+    return render_template("new_org.html", org=org)
+
+# ------------------ ORGANIZATION & PAGES ------------------
+
+def has_org_access(org):
+    user = mongo.db.users.find_one({"_id": ObjectId(session["user_id"])})
+    user_email = user.get("email")
+    return user_email in org.get("users", []) or org["user_id"] == session["user_id"]
+
+@app.route("/<org_id>")
+def org_pages(org_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
+
+    pages = list(mongo.db.pages.find({"org_id": org_id}))
+    return render_template("org_pages.html", org=org, pages=pages)
+
+
+@app.route("/<org_id>/new", methods=["GET", "POST"])
+def new_page(org_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
+
     if request.method == "POST":
         title = request.form["title"]
+        subtitle = request.form["subtitle"]
         content = request.form["content"]
-        icon = request.form.get("icon", "📄")
-        page_id = str(ObjectId())
-        page = {"id": page_id, "title": title, "content": content, "icon": icon}
-        books_col.update_one({"_id": ObjectId(book_id)}, {"$push": {"pages": page}})
-        return redirect(url_for('view_book', book_id=book_id))
-    return render_template("new_page.html", book=book)
+        mongo.db.pages.insert_one({
+            "org_id": org_id,
+            "title": title,
+            "subtitle": subtitle,
+            "content": content,
+            "author": mongo.db.users.find_one({"_id": ObjectId(session["user_id"])}).get("email"),
+            "created_at": datetime.utcnow()
+        })
+        return redirect(url_for("org_pages", org_id=org_id))
 
-@app.route("/book/<book_id>/page/<page_id>", methods=["GET", "POST"])
-def view_page(book_id, page_id):
-    book = books_col.find_one({"_id": ObjectId(book_id)})
-    page = next((p for p in book.get("pages", []) if p["id"] == page_id), None)
+    return render_template("new_page.html", org_id=org_id)
+
+
+@app.route("/<org_id>/<page_id>")
+def view_page(org_id, page_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
+
+    page = mongo.db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        return "Page not found", 404
+
+    timestamp = page.get("created_at") or datetime.utcnow()
+    data = {
+        "title": page.get("title"),
+        "headline": page.get("subtitle"),
+        "content": page.get("content"),
+        "author": page.get("author") or "Unknown",
+        "timestamp": timestamp,
+        "bgimg": url_for('static', filename='assets/img/post-bg.jpg')
+    }
+
+    return render_template("view_page.html", data=data)
+
+
+@app.route("/<org_id>/<page_id>/edit", methods=["GET", "POST"])
+def edit_page(org_id, page_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
+
+    page = mongo.db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        return "Page not found", 404
+
     if request.method == "POST":
-        page["title"] = request.form["title"]
-        page["content"] = request.form["content"]
-        page["icon"] = request.form.get("icon", "📄")
-        # Save back
-        books_col.update_one({"_id": ObjectId(book_id)}, {"$set": {"pages": book["pages"]}})
-        return redirect(url_for('view_page', book_id=book_id, page_id=page_id))
-    return render_template("view_page.html", book=book, page=page)
+        mongo.db.pages.update_one(
+            {"_id": ObjectId(page_id)},
+            {"$set": {
+                "title": request.form["title"],
+                "subtitle": request.form["subtitle"],
+                "content": request.form["content"],
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        return redirect(url_for("view_page", org_id=org_id, page_id=page_id))
 
-# -------------------
-# RUN APP
-# -------------------
+    return render_template("edit_page.html", page=page, org_id=org_id)
+
+
+# ------------------ SEARCH ------------------
+
+@app.route("/<org_id>/search")
+def search(org_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    query = request.args.get("q", "")
+    results = []
+
+    if query:
+        # Search only in this organization
+        results = list(mongo.db.pages.find({
+            "org_id": org_id,
+            "$text": {"$search": query}
+        }))
+
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    return render_template("search.html", results=results, query=query, org=org)
 
 if __name__ == "__main__":
+    # Ensure text index exists
+    mongo.db.pages.create_index([("title", "text"), ("content", "text")])
     app.run(debug=True)

@@ -1,10 +1,13 @@
+<!-- register.html -->
 {% extends "base.html" %}
 {% block content %}
-<h2>Register</h2>
-<form method="POST">
-  <input type="text" name="username" placeholder="Username" required>
-  <input type="password" name="password" placeholder="Password" required>
-  <button type="submit">Register</button>
-</form>
-<p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+<div class="container mt-5" style="max-width:400px">
+  <h2>Register</h2>
+  <form method="POST">
+    <input class="form-control mb-2" name="email" placeholder="Email" required>
+    <input class="form-control mb-2" type="password" name="password" placeholder="Password" required>
+    <button class="btn btn-primary w-100">Register</button>
+  </form>
+  <a href="{{ url_for('login') }}">Login</a>
+</div>
 {% endblock %}

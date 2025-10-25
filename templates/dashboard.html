@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="site-heading">
+                    <h1>My Organizations</h1>
+                    <span class="subheading">Manage your organizations and pages</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container px-4 px-lg-5 mb-5">
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+
+            <!-- Add new org -->
+            <a href="{{ url_for('add_org') }}" class="btn btn-success mb-3">+ Add New Organization</a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            {% if orgs %}
+                <ul class="list-group">
+                    {% for org in orgs %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ url_for('org_pages', org_id=org._id) }}">{{ org.name }}</a>
+                                <br>
+                                <small>Users: {{ org.users | join(', ') if org.users else 'None' }}</small>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('edit_org', org_id=org._id) }}" class="btn btn-sm btn-warning">Edit</a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>You have no organizations yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

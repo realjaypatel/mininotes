@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}New Page{% endblock %}
+{% block title %}Edit Page{% endblock %}
 
 {% block header %}
-<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/about-bg.jpg') }}')">
+<header class="masthead" style="background-image: url('{{ page.bgimg or url_for('static', filename='assets/img/about-bg.jpg') }}')">
   <div class="container position-relative px-4 px-lg-5">
     <div class="row gx-4 gx-lg-5 justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7 text-center text-white">
-        <h1>Create a Post</h1>
-        <span class="subheading">Powered by One Link</span>
+        <h1>Edit Post</h1>
+        <span class="subheading">Update your content</span>
       </div>
     </div>
   </div>
@@ -20,45 +20,45 @@
     <!-- Title -->
     <div class="form-group mb-2">
       <label for="title">Title</label>
-      <input type="text" class="form-control" name="title" placeholder="Page title" required>
+      <input type="text" class="form-control" name="title" value="{{ page.title }}" required>
     </div>
 
     <!-- Subtitle / Headline -->
     <div class="form-group mb-2">
       <label for="subtitle">Subtitle / Headline</label>
-      <input type="text" class="form-control" name="subtitle" placeholder="Subtitle / Headline">
+      <input type="text" class="form-control" name="subtitle" value="{{ page.subtitle }}">
     </div>
 
     <!-- Author -->
     <div class="form-group mb-2">
       <label for="author">Author</label>
-      <input type="text" class="form-control" name="author" placeholder="Author name">
+      <input type="text" class="form-control" name="author" value="{{ page.author }}">
     </div>
 
     <!-- Content -->
     <div class="form-group mb-2">
       <label for="content">Content</label>
-      <textarea id="content" name="content" class="form-control" rows="6" required></textarea>
+      <textarea id="content" name="content" class="form-control" rows="6" required>{{ page.content|safe }}</textarea>
     </div>
 
     <!-- Category -->
     <div class="form-group mb-2">
       <label for="category">Category</label>
-      <input type="text" class="form-control" name="category" placeholder="Category">
+      <input type="text" class="form-control" name="category" value="{{ page.category }}">
     </div>
 
     <!-- Tags -->
     <div class="form-group mb-2">
       <label for="tags">Tags (comma-separated)</label>
-      <input type="text" class="form-control" name="tags" placeholder="NASA, Space, Science">
+      <input type="text" class="form-control" name="tags" value="{{ page.tags }}">
     </div>
 
     <!-- Status -->
     <div class="form-group mb-2">
       <label for="status">Status</label>
       <select name="status" class="form-select">
-        <option value="pending" selected>Pending</option>
-        <option value="completed">Completed</option>
+        <option value="pending" {% if page.status == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="completed" {% if page.status == 'completed' %}selected{% endif %}>Completed</option>
       </select>
     </div>
 
@@ -66,10 +66,10 @@
     <div class="form-group mb-2">
       <label for="bgimg_file">Background Image</label>
       <input type="file" class="form-control" id="bgimg_file" accept="image/*">
-      <input type="hidden" id="bgimg" name="bgimg">
+      <input type="hidden" id="bgimg" name="bgimg" value="{{ page.bgimg }}">
     </div>
 
-    <button class="btn btn-primary mt-3">Create Page</button>
+    <button class="btn btn-primary mt-3">Update Page</button>
   </form>
 </div>
 

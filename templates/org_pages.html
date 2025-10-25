@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ org.name }} - Pages{% endblock %}
+{% block header %}
+<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}')">
+  <div class="container text-center text-white">
+    <h1>{{ org.name }}</h1>
+    <span class="subheading">Your Pages</span>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="container px-4 px-lg-5 mt-5">
+              <form method="GET" action="{{ url_for('search', org_id=org._id) }}" class="d-flex mb-3">
+                <input type="text" class="form-control me-2" name="q" placeholder="Search pages..." required>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+  {% if pages %}
+    {% for page in pages %}
+      <div class="post-preview mb-4">
+        <a href="/{{ org._id }}/{{ page._id }}">
+          <h2 class="post-title">{{ page.title }}</h2>
+          <h3 class="post-subtitle text-muted">{{ page.subtitle }}</h3>
+        </a>
+      </div>
+      <hr class="my-4" />
+    {% endfor %}
+  {% else %}
+    <p>No pages yet. Create one below!</p>
+  {% endif %}
+
+  <a class="btn btn-primary mt-3" href="/{{ org._id }}/new">+ Create New Page</a>
+</div>
+{% endblock %}
+
+
+
+
+
+
+
+
