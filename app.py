@@ -126,26 +126,28 @@ def org_pages(org_id):
 def new_page(org_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
-
     org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
     if not org or not has_org_access(org):
         return "Access denied", 403
 
     if request.method == "POST":
-        title = request.form["title"]
-        subtitle = request.form["subtitle"]
-        content = request.form["content"]
-        mongo.db.pages.insert_one({
+        page_data = {
             "org_id": org_id,
-            "title": title,
-            "subtitle": subtitle,
-            "content": content,
-            "author": mongo.db.users.find_one({"_id": ObjectId(session["user_id"])}).get("email"),
+            "title": request.form["title"],
+            "subtitle": request.form.get("subtitle"),
+            "content": request.form["content"],
+            "author": session.get("email"),
+            "category": request.form.get("category"),
+            "tags": request.form.get("tags"),
+            "status": request.form.get("status", "pending"),
+            "bgimg": request.form.get("bgimg"),
             "created_at": datetime.utcnow()
-        })
+        }
+        mongo.db.pages.insert_one(page_data)
         return redirect(url_for("org_pages", org_id=org_id))
 
     return render_template("new_page.html", org_id=org_id)
+
 
 
 @app.route("/<org_id>/<page_id>")
@@ -153,22 +155,31 @@ def view_page(org_id, page_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    # Fetch organization and check access
     org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
     if not org or not has_org_access(org):
         return "Access denied", 403
 
+    # Fetch page
     page = mongo.db.pages.find_one({"_id": ObjectId(page_id)})
     if not page:
         return "Page not found", 404
 
-    timestamp = page.get("created_at") or datetime.utcnow()
+    # Use created_at if exists, else current datetime
+    timestamp = page.get("created_at")
+    if not timestamp:
+        timestamp = datetime.utcnow()
+
     data = {
         "title": page.get("title"),
         "headline": page.get("subtitle"),
         "content": page.get("content"),
         "author": page.get("author") or "Unknown",
         "timestamp": timestamp,
-        "bgimg": url_for('static', filename='assets/img/post-bg.jpg')
+        "bgimg": page.get("bgimg") or url_for('static', filename='assets/img/post-bg.jpg'),
+        "category": page.get("category") or "",
+        "tags": page.get("tags") or "",
+        "status": page.get("status") or "pending"
     }
 
     return render_template("view_page.html", data=data)
@@ -178,22 +189,25 @@ def view_page(org_id, page_id):
 def edit_page(org_id, page_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
-
-    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
-    if not org or not has_org_access(org):
-        return "Access denied", 403
-
     page = mongo.db.pages.find_one({"_id": ObjectId(page_id)})
     if not page:
         return "Page not found", 404
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
 
     if request.method == "POST":
         mongo.db.pages.update_one(
             {"_id": ObjectId(page_id)},
             {"$set": {
                 "title": request.form["title"],
-                "subtitle": request.form["subtitle"],
+                "subtitle": request.form.get("subtitle"),
                 "content": request.form["content"],
+                "author": session.get("email"),
+                "category": request.form.get("category"),
+                "tags": request.form.get("tags"),
+                "status": request.form.get("status", "pending"),
+                "bgimg": request.form.get("bgimg"),
                 "updated_at": datetime.utcnow()
             }}
         )
