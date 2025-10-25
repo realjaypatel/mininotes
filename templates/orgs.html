@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 bg-white shadow-sm rounded-md">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-2xl font-semibold">Your Organizations</h3>
+    <a href="{{ url_for('new_org') }}" class="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 transition">
+      + New Organization
+    </a>
+  </div>
+
+  {% if not orgs %}
+    <p class="text-slate-500">No organizations yet. Create one using the button above.</p>
+  {% else %}
+    <ul class="space-y-2">
+      {% for org in orgs %}
+        <li class="flex justify-between items-center px-4 py-2 bg-white shadow-sm rounded-md hover:shadow-md transition">
+          <a href="{{ url_for('view_org', org=org.name) }}" class="font-medium">{{ org.name }}</a>
+          <a href="{{ url_for('edit_org', org_id=org._id) }}">Edit</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}

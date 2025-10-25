@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white shadow-sm rounded-md">
+  <h2 class="text-2xl font-semibold mb-4">Search Pages in "{{ org }}"</h2>
+
+  <form method="GET" action="{{ url_for('org_search', org=org) }}" class="flex mb-6 gap-2">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search pages..." 
+           class="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400">
+    <button class="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 transition">Search</button>
+  </form>
+
+  {% if query %}
+    <h3 class="mb-3 text-slate-700">Results for "{{ query }}":</h3>
+    {% if results %}
+      <ul class="space-y-2">
+        {% for page in results %}
+          <li class="border px-3 py-2 rounded hover:bg-slate-50 transition">
+            <a href="{{ url_for('view_page', org=page.org, space=page.space, page=page.title) }}" class="font-medium">{{ page.title }}</a>
+            <p class="text-sm text-slate-500">{{ page.content[:100] }}{% if page.content|length > 100 %}...{% endif %}</p>
+            <p class="text-xs text-slate-400">Space: {{ page.space }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-slate-500">No results found in this organization.</p>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

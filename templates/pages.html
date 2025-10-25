@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white shadow-sm rounded-md">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="text-2xl font-semibold">{{ space }} - Pages</h3>
+    <a href="{{ url_for('new_page', org=org, space=space) }}" 
+       class="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 transition">+ New Page</a>
+  </div>
+
+  {% if not pages %}
+    <p class="text-slate-500">No pages yet. Start by creating one.</p>
+  {% else %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full border border-slate-200 rounded-md">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-4 py-2 text-left border-b">Title</th>
+            <th class="px-4 py-2 text-left border-b">Content Preview</th>
+            <th class="px-4 py-2 border-b">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in pages %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-2 border-b">
+              <a href="{{ url_for('view_page', org=org, space=space, page=p.title) }}" class="font-medium text-slate-900">{{ p.title }}</a>
+            </td>
+            <td class="px-4 py-2 border-b text-slate-600">
+              {{ p.content[:80] }}{% if p.content|length > 80 %}...{% endif %}
+            </td>
+            <td class="px-4 py-2 border-b text-center">
+              <a href="{{ url_for('edit_page', org=org, space=space, page=p.title) }}" 
+                 class="text-slate-700 hover:text-slate-900">✏️ Edit</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
