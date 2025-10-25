@@ -1,0 +1,43 @@
+<aside class="hidden lg:block lg:w-72 xl:w-80 border-r bg-white/95 backdrop-blur sticky top-0 h-screen z-30">
+  <div class="p-4 border-b">
+    <div class="flex items-center gap-2 font-medium text-lg">
+      <svg class="w-5 h-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+      </svg>
+      Documentation
+    </div>
+  </div>
+
+  <div class="px-4 py-6 overflow-y-auto no-scrollbar">
+    <div class="mb-4">
+      <input type="text" placeholder="Search docs..."
+             class="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring focus:ring-slate-300">
+    </div>
+
+    <!-- Nested sidebar items -->
+    <div class="space-y-2">
+      <div>
+        <button class="flex items-center justify-between w-full p-2 rounded hover:bg-slate-100">
+          <span>Getting Started</span>
+          <svg class="w-4 h-4 text-slate-400 rotate-90" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+            <path d="m9 18 6-6-6-6"></path>
+          </svg>
+        </button>
+        <div class="ml-4 mt-1 space-y-1">
+          <a href="#" class="block px-3 py-2 rounded text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900">Introduction</a>
+          <a href="#" class="block px-3 py-2 rounded text-sm bg-slate-100 font-medium">Quick Start Guide</a>
+          <a href="#" class="block px-3 py-2 rounded text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900">Installation</a>
+        </div>
+      </div>
+
+      <div>
+        <button class="flex items-center justify-between w-full p-2 rounded hover:bg-slate-100">API Reference</button>
+      </div>
+
+      <div>
+        <button class="flex items-center justify-between w-full p-2 rounded hover:bg-slate-100">Account Settings</button>
+      </div>
+    </div>
+  </div>
+</aside>
