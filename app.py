@@ -74,6 +74,7 @@ def view_org(org):
     if "username" not in session:
         return redirect(url_for("login"))
     spaces = mongo.db.spaces.find({"org": org})
+    spaces = list(mongo.db.spaces.find({"org": org}))
     return render_template("spaces.html", org=org, spaces=spaces)
 
 
@@ -115,6 +116,23 @@ def edit_page(org, space, page):
         return redirect(url_for("view_page", org=org, space=space, page=page))
     return render_template("page_edit.html", org=org, space=space, page=p, action="Edit")
 
+
+@app.route("/<org>/search", methods=["GET", "POST"])
+def org_search(org):
+    query = request.args.get("q", "")
+    results = []
+
+    if query:
+        # Search only inside this org
+        results = list(mongo.db.pages.find({
+            "org": org,
+            "$or": [
+                {"title": {"$regex": query, "$options": "i"}},
+                {"content": {"$regex": query, "$options": "i"}}
+            ]
+        }))
+
+    return render_template("org_search.html", org=org, query=query, results=results)
 
 if __name__ == "__main__":
     app.run(debug=True)
