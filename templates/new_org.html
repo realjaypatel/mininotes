@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="site-heading">
+                    <h1>{{ org.name if org else "New Organization" }}</h1>
+                    <span class="subheading">{{ "Edit your organization" if org else "Create a new organization" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container px-4 px-lg-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Organization Name</label>
+                    <input type="text" class="form-control" name="name" id="name" required value="{{ org.name if org else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="users" class="form-label">Users (comma-separated emails)</label>
+                    <input type="text" class="form-control" name="users" id="users" value="{{ org.users | join(', ') if org else '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary">{{ "Update" if org else "Create" }}</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

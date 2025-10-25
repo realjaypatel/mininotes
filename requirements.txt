@@ -1,4 +1,3 @@
-Flask
-Flask-PyMongo
-Flask-Login
+flask
+flask-pymongo
 werkzeug

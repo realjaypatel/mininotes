@@ -1,244 +1,242 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_pymongo import PyMongo
-from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
+from bson import ObjectId
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+app.secret_key = "secretkey"
+app.config["MONGO_URI"] = "mongodb+srv://user:user@cluster0.u3fdtma.mongodb.net/md3"
 
-app.config["MONGO_URI"] = "mongodb+srv://user:user@cluster0.u3fdtma.mongodb.net/md1"
 mongo = PyMongo(app)
 
-# ---------- AUTH ----------
+# ------------------ AUTH ------------------
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        password = generate_password_hash(request.form["password"])
-        if mongo.db.users.find_one({"username": username}):
-            return "User exists!"
-        mongo.db.users.insert_one({"username": username, "password": password})
-        session["username"] = username
-        return redirect(url_for("home"))
+        email = request.form["email"]
+        password = request.form["password"]
+        if mongo.db.users.find_one({"email": email}):
+            return "User already exists!"
+        hashed = generate_password_hash(password)
+        mongo.db.users.insert_one({"email": email, "password": hashed})
+        return redirect(url_for("login"))
     return render_template("register.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        user = mongo.db.users.find_one({"username": username})
-        if user and check_password_hash(user["password"], request.form["password"]):
-            session["username"] = username
-            return redirect(url_for("home"))
-        return "Invalid credentials"
+        email = request.form["email"]
+        password = request.form["password"]
+        user = mongo.db.users.find_one({"email": email})
+        if user and check_password_hash(user["password"], password):
+            session["user_id"] = str(user["_id"])
+            return redirect(url_for("dashboard"))
+        return "Invalid credentials!"
     return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
-    session.pop("username", None)
-    return redirect(url_for("landing"))
+    session.clear()
+    return redirect(url_for("login"))
 
+# ------------------ DASHBOARD ------------------
 
-# ---------- LANDING ----------
 @app.route("/")
-def home():
-    if "username" not in session:
-        return redirect(url_for("landing"))
-
-    username = session["username"]
-    # Show only orgs user owns or belongs to
-    orgs = list(mongo.db.orgs.find({"$or": [{"owner": username}, {"users": username}]}))
-    return render_template("orgs.html", orgs=orgs, username=username)
-
-
-@app.route("/landing")
-def landing():
-    return render_template("landing.html")
-
-
-# ---------- HELPER ----------
-def has_org_access(org_name, username):
-    org_data = mongo.db.orgs.find_one({"name": org_name})
-    if not org_data:
-        return False
-    return username == org_data["owner"] or username in org_data.get("users", [])
-
-
-# ---------- ORG ----------
-@app.route("/<org>")
-def view_org(org):
-    if "username" not in session:
+def dashboard():
+    if "user_id" not in session:
         return redirect(url_for("login"))
-    username = session["username"]
-    if not has_org_access(org, username):
-        return "Access denied", 403
 
-    spaces = list(mongo.db.spaces.find({"org": org}))
-    return render_template("spaces.html", org=org, spaces=spaces)
+    user = mongo.db.users.find_one({"_id": ObjectId(session["user_id"])})
+    user_email = user.get("email")
+    # Get orgs where user is owner or listed in users
+    orgs = list(mongo.db.organizations.find({
+        "$or": [
+            {"user_id": session["user_id"]},
+            {"users": user_email}
+        ]
+    }))
+    return render_template("dashboard.html", orgs=orgs)
 
 
-@app.route("/<org>/create_space", methods=["POST"])
-def create_space(org):
-    if "username" not in session:
+@app.route("/add_org", methods=["GET", "POST"])
+def add_org():
+    if "user_id" not in session:
         return redirect(url_for("login"))
-    username = session["username"]
-    if not has_org_access(org, username):
-        return "Access denied", 403
 
-    name = request.form["name"]
-    mongo.db.spaces.insert_one({"org": org, "name": name})
-    return redirect(url_for("view_org", org=org))
-
-
-# ---------- SPACE ----------
-@app.route("/<org>/<space>")
-def view_space(org, space):
-    if "username" not in session:
-        return redirect(url_for("login"))
-    username = session["username"]
-    if not has_org_access(org, username):
-        return "Access denied", 403
-
-    pages = mongo.db.pages.find({"org": org, "space": space})
-    return render_template("pages.html", org=org, space=space, pages=pages)
-
-
-@app.route("/<org>/<space>/new", methods=["GET", "POST"])
-def new_page(org, space):
-    if "username" not in session:
-        return redirect(url_for("login"))
-    username = session["username"]
-    if not has_org_access(org, username):
-        return "Access denied", 403
-
-    if request.method == "POST":
-        title = request.form["title"]
-        content = request.form["content"]
-        mongo.db.pages.insert_one({"org": org, "space": space, "title": title, "content": content})
-        return redirect(url_for("view_space", org=org, space=space))
-    return render_template("page_edit.html", org=org, space=space, action="New")
-
-
-@app.route("/<org>/<space>/<page>")
-def view_page(org, space, page):
-    if "username" not in session:
-        return redirect(url_for("login"))
-    username = session["username"]
-    if not has_org_access(org, username):
-        return "Access denied", 403
-
-    p = mongo.db.pages.find_one({"org": org, "space": space, "title": page})
-    return render_template("page_view.html", org=org, space=space, page=p)
-
-
-@app.route("/<org>/<space>/<page>/edit", methods=["GET", "POST"])
-def edit_page(org, space, page):
-    if "username" not in session:
-        return redirect(url_for("login"))
-    username = session["username"]
-    if not has_org_access(org, username):
-        return "Access denied", 403
-
-    p = mongo.db.pages.find_one({"org": org, "space": space, "title": page})
-    if request.method == "POST":
-        mongo.db.pages.update_one({"_id": p["_id"]}, {"$set": {"content": request.form["content"]}})
-        return redirect(url_for("view_page", org=org, space=space, page=page))
-    return render_template("page_edit.html", org=org, space=space, page=p, action="Edit")
-
-
-# ---------- ORG SEARCH ----------
-@app.route("/<org>/search", methods=["GET", "POST"])
-def org_search(org):
-    if "username" not in session:
-        return redirect(url_for("login"))
-    username = session["username"]
-    if not has_org_access(org, username):
-        return "Access denied", 403
-
-    query = request.args.get("q", "")
-    results = []
-    if query:
-        results = list(mongo.db.pages.find({
-            "org": org,
-            "$or": [
-                {"title": {"$regex": query, "$options": "i"}},
-                {"content": {"$regex": query, "$options": "i"}}
-            ]
-        }))
-    return render_template("org_search.html", org=org, query=query, results=results)
-
-
-# ---------- ORG CREATE / EDIT ----------
-@app.route("/org/new", methods=["GET", "POST"])
-def new_org():
-    if "username" not in session:
-        return redirect(url_for("login"))
-    
     if request.method == "POST":
         name = request.form["name"]
-        users_str = request.form.get("users", "")
-        users_list = [u.strip() for u in users_str.split(",") if u.strip()]
-        mongo.db.orgs.insert_one({"name": name, "owner": session["username"], "users": users_list})
-        return redirect(url_for("home"))
-    
-    return render_template("org_form.html", action="New", org=None)
+        users = request.form.get("users", "")
+        mongo.db.organizations.insert_one({
+            "user_id": session["user_id"],  # owner
+            "name": name,
+            "users": [email.strip() for email in users.split(",") if email.strip()]
+        })
+        return redirect(url_for("dashboard"))
+    return render_template("new_org.html")
 
 
-@app.route("/org/<org_id>/edit", methods=["GET", "POST"])
+@app.route("/<org_id>/edit_org", methods=["GET", "POST"])
 def edit_org(org_id):
-    if "username" not in session:
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
-    org_data = mongo.db.orgs.find_one({"_id": ObjectId(org_id)})
-    if not org_data:
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org:
         return "Organization not found", 404
 
     if request.method == "POST":
-        new_name = request.form["name"]
-        users_str = request.form.get("users", "")
-        users_list = [u.strip() for u in users_str.split(",") if u.strip()]
-        mongo.db.orgs.update_one(
-            {"_id": org_data["_id"]},
-            {"$set": {"name": new_name, "users": users_list}}
-        )
-        return redirect(url_for("home"))
-
-    return render_template("org_form.html", action="Edit", org=org_data)
-
-# ---------- SPACE CREATE / EDIT ----------
-@app.route("/<org>/space/new", methods=["GET", "POST"])
-def new_space(org):
-    if "username" not in session:
-        return redirect(url_for("login"))
-    
-    if request.method == "POST":
         name = request.form["name"]
-        mongo.db.spaces.insert_one({"org": org, "name": name})
-        return redirect(url_for("view_org", org=org))
-    
-    return render_template("space_form.html", action="New", org=org, space=None)
+        users = request.form.get("users", "")
+        mongo.db.organizations.update_one(
+            {"_id": ObjectId(org_id)},
+            {"$set": {
+                "name": name,
+                "users": [email.strip() for email in users.split(",") if email.strip()]
+            }}
+        )
+        return redirect(url_for("dashboard"))
 
+    return render_template("new_org.html", org=org)
 
-@app.route("/<org>/space/<space_id>/edit", methods=["GET", "POST"])
-def edit_space(org, space_id):
-    if "username" not in session:
+# ------------------ ORGANIZATION & PAGES ------------------
+
+def has_org_access(org):
+    user = mongo.db.users.find_one({"_id": ObjectId(session["user_id"])})
+    user_email = user.get("email")
+    return user_email in org.get("users", []) or org["user_id"] == session["user_id"]
+
+@app.route("/<org_id>")
+def org_pages(org_id):
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
-    from bson import ObjectId
-    space_data = mongo.db.spaces.find_one({"_id": ObjectId(space_id)})
-    if not space_data:
-        return "Space not found", 404
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
+
+    pages = list(mongo.db.pages.find({"org_id": org_id}))
+    return render_template("org_pages.html", org=org, pages=pages)
+
+
+@app.route("/<org_id>/new", methods=["GET", "POST"])
+def new_page(org_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
 
     if request.method == "POST":
-        new_name = request.form["name"]
-        mongo.db.spaces.update_one({"_id": space_data["_id"]}, {"$set": {"name": new_name}})
-        return redirect(url_for("view_org", org=org))
+        page_data = {
+            "org_id": org_id,
+            "title": request.form["title"],
+            "subtitle": request.form.get("subtitle"),
+            "content": request.form["content"],
+            "author": session.get("email"),
+            "category": request.form.get("category"),
+            "tags": request.form.get("tags"),
+            "status": request.form.get("status", "pending"),
+            "bgimg": request.form.get("bgimg"),
+            "created_at": datetime.utcnow()
+        }
+        mongo.db.pages.insert_one(page_data)
+        return redirect(url_for("org_pages", org_id=org_id))
 
-    return render_template("space_form.html", action="Edit", org=org, space=space_data)
+    return render_template("new_page.html", org_id=org_id)
 
 
+
+@app.route("/<org_id>/<page_id>")
+def view_page(org_id, page_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    # Fetch organization and check access
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
+
+    # Fetch page
+    page = mongo.db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        return "Page not found", 404
+
+    # Use created_at if exists, else current datetime
+    timestamp = page.get("created_at")
+    if not timestamp:
+        timestamp = datetime.utcnow()
+
+    data = {
+        "title": page.get("title"),
+        "headline": page.get("subtitle"),
+        "content": page.get("content"),
+        "author": page.get("author") or "Unknown",
+        "timestamp": timestamp,
+        "bgimg": page.get("bgimg") or url_for('static', filename='assets/img/post-bg.jpg'),
+        "category": page.get("category") or "",
+        "tags": page.get("tags") or "",
+        "status": page.get("status") or "pending"
+    }
+
+    return render_template("view_page.html", data=data)
+
+
+@app.route("/<org_id>/<page_id>/edit", methods=["GET", "POST"])
+def edit_page(org_id, page_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    page = mongo.db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        return "Page not found", 404
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
+
+    if request.method == "POST":
+        mongo.db.pages.update_one(
+            {"_id": ObjectId(page_id)},
+            {"$set": {
+                "title": request.form["title"],
+                "subtitle": request.form.get("subtitle"),
+                "content": request.form["content"],
+                "author": session.get("email"),
+                "category": request.form.get("category"),
+                "tags": request.form.get("tags"),
+                "status": request.form.get("status", "pending"),
+                "bgimg": request.form.get("bgimg"),
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        return redirect(url_for("view_page", org_id=org_id, page_id=page_id))
+
+    return render_template("edit_page.html", page=page, org_id=org_id)
+
+
+# ------------------ SEARCH ------------------
+
+@app.route("/<org_id>/search")
+def search(org_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    query = request.args.get("q", "")
+    results = []
+
+    if query:
+        # Search only in this organization
+        results = list(mongo.db.pages.find({
+            "org_id": org_id,
+            "$text": {"$search": query}
+        }))
+
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    return render_template("search.html", results=results, query=query, org=org)
 
 if __name__ == "__main__":
+    # Ensure text index exists
+    mongo.db.pages.create_index([("title", "text"), ("content", "text")])
     app.run(debug=True)
