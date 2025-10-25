@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ action }} Page</h2>
+<form method="POST">
+    {% if action == "New" %}
+    <input type="text" name="title" placeholder="Page Title"><br>
+    {% endif %}
+    <textarea name="content" rows="10" cols="50">{{ page.content if page else '' }}</textarea><br>
+    <button type="submit">{{ action }}</button>
+</form>
+{% endblock %}

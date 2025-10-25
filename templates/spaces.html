@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Spaces in {{ org }}</h2>
+<ul>
+    {% for s in spaces %}
+    <li><a href="{{ url_for('view_space', org=org, space=s.name) }}">{{ s.name }}</a></li>
+    {% endfor %}
+</ul>
+<form method="POST" action="{{ url_for('create_space', org=org) }}">
+    <input type="text" name="name" placeholder="New space name">
+    <button type="submit">Create</button>
+</form>
+{% endblock %}

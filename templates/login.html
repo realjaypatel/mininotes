@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Login</h2>
+<h2>{{ 'Login' if request.path == '/login' else 'Register' }}</h2>
 <form method="POST">
-  <input type="text" name="username" placeholder="Username" required>
-  <input type="password" name="password" placeholder="Password" required>
-  <button type="submit">Login</button>
+    <input type="text" name="username" placeholder="Username"><br>
+    <input type="password" name="password" placeholder="Password"><br>
+    <button type="submit">Submit</button>
 </form>
-<p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
 {% endblock %}

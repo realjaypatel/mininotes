@@ -1,0 +1,7 @@
+body { font-family: sans-serif; background: #f8f8f8; color: #222; margin: 0; }
+.container { width: 80%; margin: 2em auto; background: white; padding: 1em; border: 1px solid #ccc; }
+.nav { background: #333; color: white; padding: 10px; text-align: right; }
+a { color: #3366cc; text-decoration: none; }
+input, textarea, button { margin-top: 5px; display: block; padding: 5px; width: 100%; box-sizing: border-box; }
+ul { list-style: none; padding: 0; }
+li { padding: 5px 0; border-bottom: 1px solid #eee; }
