@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 bg-white shadow-sm rounded-md">
+  <h3 class="text-2xl font-semibold mb-4">{{ action }} Organization</h3>
+
+  <form action="" method="POST" class="space-y-4">
+    <div>
+      <label class="block mb-1 font-medium">Organization Name</label>
+      <input type="text" name="name" value="{{ org.name if org else '' }}" 
+             class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+    </div>
+
+    <div>
+      <label class="block mb-1 font-medium">Users</label>
+      <div class="flex gap-2 mb-2">
+        <div id="users-container" class="flex flex-wrap gap-2 border rounded-md p-2 min-h-[48px] cursor-text" onclick="userInput.focus()"></div>
+      </div>
+      <div class="flex gap-2">
+        <input type="text" id="userInput" class="flex-1 px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400" placeholder="Type email">
+        <button type="button" id="addUserBtn" class="px-3 py-1 bg-slate-900 text-white rounded-md hover:bg-slate-700 transition">Enter</button>
+      </div>
+      <input type="hidden" name="users" id="users-hidden" value="{{ org.users | join(',') if org and org.users else '' }}">
+    </div>
+
+    <button type="submit" class="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 transition">
+      {{ action }}
+    </button>
+  </form>
+</div>
+
+<script>
+const container = document.getElementById('users-container');
+const input = document.getElementById('userInput');
+const hiddenInput = document.getElementById('users-hidden');
+const addBtn = document.getElementById('addUserBtn');
+
+let users = hiddenInput.value ? hiddenInput.value.split(',') : [];
+
+function renderUsers() {
+  container.innerHTML = '';
+  users.forEach((user, idx) => {
+    const tag = document.createElement('span');
+    tag.className = "px-2 py-1 bg-slate-200 rounded-md flex items-center gap-1";
+    tag.innerHTML = `${user} <button type="button" onclick="removeUser(${idx})" class="text-xs">x</button>`;
+    container.appendChild(tag);
+  });
+  hiddenInput.value = users.join(',');
+}
+
+function removeUser(idx) {
+  users.splice(idx, 1);
+  renderUsers();
+}
+
+function addUser() {
+  const val = input.value.trim();
+  if(val !== '') {
+    users.push(val);
+    input.value = '';
+    renderUsers();
+  }
+}
+
+// Add user on Enter key
+input.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addUser();
+  }
+});
+
+// Add user on button click
+addBtn.addEventListener('click', function() {
+  addUser();
+});
+
+renderUsers();
+</script>
+{% endblock %}
