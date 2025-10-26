@@ -15,6 +15,19 @@
                         <a href="#!">{{ data.author }}</a>
                         on {{ data.timestamp.strftime('%B %d, %Y') }}
                     </span>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        {% if data.category %}
+                            <span class="badge bg-primary">{{ data.category }}</span>
+                        {% endif %}
+                        {% if data.tags %}
+                            {% for tag in data.tags.split(',') %}
+                                <span class="badge bg-success">{{ tag.strip() }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        {% if data.status %}
+                            <span class="badge bg-warning text-dark">{{ data.status|capitalize }}</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -29,9 +42,9 @@
             <div class="col-md-10 col-lg-8 col-xl-7">
                 {{ data.content | safe }}
                 
-<div class="mt-3">
-    <a href="{{ request.path }}/edit" class="btn btn-warning btn-sm">Edit Page</a>
-</div>
+                <div class="mt-3">
+                    <a href="{{ request.path }}/edit" class="btn btn-warning btn-sm">Edit Page</a>
+                </div>
             </div>
         </div>
     </div>
@@ -42,6 +55,13 @@
     .col-xl-7 {
         flex: 0 0 auto;
         width: 70.333333%;
+    }
+}
+
+@media (min-width: 992px) {
+    header.masthead {
+        padding-top: 12.5rem;
+        padding-bottom: 2rem;
     }
 }
 </style>

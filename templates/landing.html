@@ -1,9 +1,74 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="card p-5 text-center">
-  <h2 class="mb-3 fw-semibold">Welcome to Your Workspace</h2>
-  <p class="text-muted mb-4">A minimal, Notion-inspired space for your notes, orgs, and ideas.</p>
-  <a href="{{ url_for('register') }}" class="btn btn-dark me-2 px-4">Get Started</a>
-  <a href="{{ url_for('login') }}" class="btn btn-outline-secondary px-4">Login</a>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MD3 — Build and Manage Your Organization Effortlessly</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="{{ url_for('static', filename='assets/logo.png') }}">
+</head>
+<body class="bg-white text-gray-900">
+
+  <!-- Navbar -->
+  <nav class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+    <div class="flex items-center space-x-2">
+      <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo" class="w-7 h-7">
+      <h1 class="font-semibold text-lg">MD3</h1>
+    </div>
+    <div class="hidden md:flex items-center space-x-6">
+      <a href="#features" class="hover:text-blue-600">Features</a>
+      <a href="#collaboration" class="hover:text-blue-600">Collaboration</a>
+      <a href="#security" class="hover:text-blue-600">Security</a>
+      <a href="{{ url_for('login') }}" class="hover:text-blue-600">Login</a>
+      <a href="{{ url_for('register') }}" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="text-center py-20 px-4">
+    <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-4">Manage your organization, pages, and users in one place.</h1>
+    <p class="text-gray-600 text-lg max-w-xl mx-auto mb-8">
+      MD3 helps you organize teams, create pages, and collaborate securely — all from a single dashboard.
+    </p>
+    <div class="flex justify-center space-x-4">
+      <a href="{{ url_for('register') }}" class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800">Get Started Free</a>
+      <a href="{{ url_for('login') }}" class="px-6 py-3 border border-gray-300 rounded-lg hover:border-gray-500">Login</a>
+    </div>
+  </section>
+
+  <!-- Feature Section -->
+  <section id="features" class="py-20 bg-gray-50 px-6">
+    <div class="max-w-5xl mx-auto grid md:grid-cols-3 gap-10 text-center">
+      <div class="p-6 bg-white shadow-sm rounded-2xl">
+        <i class="fa-solid fa-building text-3xl text-blue-600 mb-3"></i>
+        <h3 class="text-xl font-semibold mb-2">Organizations</h3>
+        <p class="text-gray-500">Create and manage multiple organizations under one account.</p>
+      </div>
+      <div class="p-6 bg-white shadow-sm rounded-2xl">
+        <i class="fa-solid fa-file-lines text-3xl text-blue-600 mb-3"></i>
+        <h3 class="text-xl font-semibold mb-2">Pages</h3>
+        <p class="text-gray-500">Add and edit pages effortlessly to document and share information.</p>
+      </div>
+      <div class="p-6 bg-white shadow-sm rounded-2xl">
+        <i class="fa-solid fa-user-group text-3xl text-blue-600 mb-3"></i>
+        <h3 class="text-xl font-semibold mb-2">Collaboration</h3>
+        <p class="text-gray-500">Invite users and manage permissions to work together seamlessly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section id="signup" class="py-20 text-center">
+    <h2 class="text-3xl md:text-4xl font-bold mb-4">Start building your workspace today</h2>
+    <p class="text-gray-600 mb-8">Free to use. No credit card required.</p>
+    <a href="{{ url_for('register') }}" class="px-8 py-4 bg-black text-white rounded-lg hover:bg-gray-800 text-lg">Create Your Account</a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-10 border-t border-gray-100 text-center text-gray-500 text-sm">
+    © 2025 MD3 — Built with ❤️ by The Algorithm Company.
+  </footer>
+
+  <script src="https://kit.fontawesome.com/58f8f8e98f.js" crossorigin="anonymous"></script>
+</body>
+</html>
