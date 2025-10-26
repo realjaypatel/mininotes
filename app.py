@@ -110,6 +110,19 @@ def has_org_access(org):
     user_email = user.get("email")
     return user_email in org.get("users", []) or org["user_id"] == session["user_id"]
 
+# ------------------ PAGE ID COUNTER ------------------
+
+def get_next_page_id(org_id):
+    counter = mongo.db.counters.find_one_and_update(
+        {"org_id": org_id},
+        {"$inc": {"seq": 1}},
+        upsert=True,
+        return_document=True
+    )
+    return counter["seq"]
+
+# ------------------ ORG PAGES ------------------
+
 @app.route("/<org_id>")
 def org_pages(org_id):
     if "user_id" not in session:
@@ -119,7 +132,17 @@ def org_pages(org_id):
     if not org or not has_org_access(org):
         return "Access denied", 403
 
-    pages = list(mongo.db.pages.find({"org_id": org_id}))
+    # Show all pages in org that are public or accessible to user
+    user_email = session.get("email")
+    pages = list(mongo.db.pages.find({
+        "org_id": org_id,
+        "$or": [
+            {"visibility": "Public"},
+            {"visibility": "Team", "org_id": org_id},
+            {"visibility": "Private", "author": user_email}
+        ]
+    }).sort("page_id", 1))
+
     return render_template("org_pages.html", org=org, pages=pages)
 
 
@@ -130,10 +153,13 @@ def new_page(org_id):
     org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
     if not org or not has_org_access(org):
         return "Access denied", 403
-    print('posted by : ',session)
+
     if request.method == "POST":
+        page_id = get_next_page_id(org_id)  # incremental page ID
+
         page_data = {
             "org_id": org_id,
+            "page_id": page_id,
             "title": request.form["title"],
             "subtitle": request.form.get("subtitle"),
             "content": request.form["content"],
@@ -141,7 +167,7 @@ def new_page(org_id):
             "category": request.form.get("category"),
             "tags": request.form.get("tags"),
             "status": request.form.get("status", "pending"),
-            "visibility":request.form.get("visibility","Team"),
+            "visibility": request.form.get("visibility", "Team"),
             "bgimg": request.form.get("bgimg"),
             "created_at": datetime.utcnow()
         }
@@ -150,11 +176,11 @@ def new_page(org_id):
 
     return render_template("new_page.html", org_id=org_id)
 
-@app.route("/<org_id>/<page_id>/edit", methods=["GET", "POST"])
+@app.route("/<org_id>/page/<int:page_id>/edit", methods=["GET", "POST"])
 def edit_page(org_id, page_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
-    page = mongo.db.pages.find_one({"_id": ObjectId(page_id)})
+    page = mongo.db.pages.find_one({"org_id": org_id, "page_id": page_id})
     if not page:
         return "Page not found", 404
     org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
@@ -162,13 +188,12 @@ def edit_page(org_id, page_id):
         return "Access denied", 403
     if request.method == "POST":
         mongo.db.pages.update_one(
-            {"_id": ObjectId(page_id)},
+            {"org_id": org_id, "page_id": page_id},
             {"$set": {
                 "title": request.form["title"],
                 "subtitle": request.form.get("subtitle"),
                 "content": request.form["content"],
-                # "author": session.get("user_id"),
-                "visibility":request.form.get("visibility","Team"),
+                "visibility": request.form.get("visibility", "Team"),
                 "category": request.form.get("category"),
                 "tags": request.form.get("tags"),
                 "status": request.form.get("status", "pending"),
@@ -181,9 +206,9 @@ def edit_page(org_id, page_id):
     return render_template("edit_page.html", page=page, org_id=org_id)
 
 
-@app.route("/<org_id>/<page_id>")
+@app.route("/<org_id>/page/<int:page_id>")
 def view_page(org_id, page_id):
-    page = mongo.db.pages.find_one({"_id": ObjectId(page_id)})
+    page = mongo.db.pages.find_one({"org_id": org_id, "page_id": page_id})
 
     if not page:
         return "Page not found", 404
@@ -207,6 +232,7 @@ def view_page(org_id, page_id):
         "title": page.get("title"),
         "headline": page.get("subtitle"),
         "content": page.get("content"),
+        "page_id":page.get("page_id"),
         "author": page.get("author") or "Unknown",
         "timestamp": timestamp,
         "bgimg": page.get("bgimg") or url_for('static', filename='assets/img/post-bg.jpg'),
@@ -217,7 +243,6 @@ def view_page(org_id, page_id):
     }
 
     return render_template("view_page.html", data=data, org=org)
-
 
 
 # ------------------ SEARCH ------------------
@@ -231,7 +256,6 @@ def search(org_id):
     results = []
 
     if query:
-        # Search only in this organization
         results = list(mongo.db.pages.find({
             "org_id": org_id,
             "$text": {"$search": query}
@@ -243,13 +267,10 @@ def search(org_id):
 
 @app.route("/landing")
 def landing():
-    # You can later customize this as your public homepage
     return render_template("landing.html")
 
 
 if __name__ == "__main__":
-    # Ensure text index exists
+    # Ensure text index exists for search
     mongo.db.pages.create_index([("title", "text"), ("content", "text")])
     app.run(debug=True)
-
-

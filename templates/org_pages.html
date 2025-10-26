@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ org.name }} - Pages{% endblock %}
+
 {% block header %}
 <header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}')">
   <div class="container text-center text-white"></div>
@@ -9,29 +10,36 @@
 {% block content %}
 <div class="container px-4 px-lg-5 mt-5">
 
-  <!-- View Toggle Buttons -->
-  <div class="d-flex justify-content-end mb-3">
+  <!-- Search Bar + View Toggle -->
+  <div class="d-flex mb-4 align-items-center">
+    <form method="GET" action="{{ url_for('search', org_id=org._id) }}" class="d-flex flex-grow-1 me-3">
+      <input type="text" class="form-control me-2" name="q" placeholder="Search pages..." required>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <!-- View Toggle Buttons as small icons -->
     <div class="btn-group" role="group" aria-label="View toggle">
-      <button type="button" class="btn btn-outline-secondary active" data-view="list">List</button>
-      <button type="button" class="btn btn-outline-secondary" data-view="card">Card</button>
-      <button type="button" class="btn btn-outline-secondary" data-view="table">Table</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm active" data-view="list" title="List View">
+        <i class="bi bi-list">L</i>
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-view="card" title="Card View">
+        <i class="bi bi-grid-3x3-gap">C</i>
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-view="table" title="Table View">
+        <i class="bi bi-table">T</i>
+      </button>
     </div>
   </div>
-
-  <!-- Search Bar -->
-  <form method="GET" action="{{ url_for('search', org_id=org._id) }}" class="d-flex mb-4">
-    <input type="text" class="form-control me-2" name="q" placeholder="Search pages..." required>
-    <button type="submit" class="btn btn-primary">Search</button>
-  </form>
 
   <!-- List View (default) -->
   <div id="view-list">
     {% if pages %}
       {% for page in pages %}
         <div class="post-preview mb-4 p-3 border rounded shadow-sm hover-shadow">
-          <a href="/{{ org._id }}/{{ page._id }}" class="text-decoration-none text-dark">
+          <a href="/{{ org._id }}/page/{{ page.page_id }}" class="text-decoration-none text-dark">
             <h5 class="mb-1">{{ page.title }}</h5>
             <p class="text-muted mb-0">{{ page.subtitle }}</p>
+            <small class="text-muted">ID: {{ page.page_id }} | Visibility: {{ page.visibility }} | Category: {{ page.category }} | Tags: {{ page.tags }}</small>
           </a>
         </div>
       {% endfor %}
@@ -49,8 +57,9 @@
             <div>
               <h5 class="card-title">{{ page.title }}</h5>
               <p class="card-text text-muted">{{ page.subtitle }}</p>
+              <small class="text-muted">ID: {{ page.page_id }} | Visibility: {{ page.visibility }} | Category: {{ page.category }} | Tags: {{ page.tags }}</small>
             </div>
-            <a href="/{{ org._id }}/{{ page._id }}" class="btn btn-sm btn-primary mt-3 align-self-start">Open</a>
+            <a href="/{{ org._id }}/page/{{ page._id }}" class="btn btn-sm btn-primary mt-3 align-self-start">Open</a>
           </div>
         </div>
       </div>
@@ -62,18 +71,26 @@
     <table class="table align-middle table-hover border rounded shadow-sm mb-0">
       <thead class="table-light">
         <tr>
+          <th>Page ID</th>
           <th>Title</th>
           <th>Subtitle</th>
+          <th>Category</th>
+          <th>Tags</th>
+          <th>Visibility</th>
           <th class="text-end">Action</th>
         </tr>
       </thead>
       <tbody>
         {% for page in pages %}
         <tr class="hover-shadow-sm">
+          <td>{{ page.page_id }}</td>
           <td>{{ page.title }}</td>
           <td class="text-muted">{{ page.subtitle }}</td>
+          <td>{{ page.category }}</td>
+          <td>{{ page.tags }}</td>
+          <td>{{ page.visibility }}</td>
           <td class="text-end">
-            <a href="/{{ org._id }}/{{ page._id }}" class="btn btn-sm btn-outline-primary">View</a>
+            <a href="/{{ org._id }}/page/{{ page.page_id }}" class="btn btn-sm btn-outline-primary">View</a>
           </td>
         </tr>
         {% endfor %}
@@ -148,5 +165,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-
 {% endblock %}
