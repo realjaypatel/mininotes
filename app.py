@@ -272,5 +272,4 @@ def landing():
 
 if __name__ == "__main__":
     # Ensure text index exists for search
-    mongo.db.pages.create_index([("title", "text"), ("content", "text")])
     app.run(debug=True)
