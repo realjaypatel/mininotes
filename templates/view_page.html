@@ -6,48 +6,50 @@
 <div class="help-wrapper mt-5 py-5">
   <div class="container">
     <!-- Breadcrumb -->
-    <ol class="breadcrumb mb-4 bg-transparent p-0 small">
-      <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-primary">Home</a></li>
-      <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-primary">Getting Started</a></li>
-      <li class="breadcrumb-item active text-muted">{{ data.title }}</li>
-    </ol>
+<ol class="breadcrumb mb-4 bg-transparent p-0 small" style="font-size: 0.83rem;">
+  <li class="breadcrumb-item">
+    <a href="/" class="text-decoration-none text-primary opacity-75 hover-opacity-100">Home</a>
+  </li>
+  <li class="breadcrumb-item">
+    <a href="#" class="text-decoration-none text-primary opacity-75 hover-opacity-100">Getting Started</a>
+  </li>
+  <li class="breadcrumb-item active text-muted">{{ data.title }}</li>
+</ol>
 
-```
 <!-- Main Content Section -->
 <div class="row">
   <!-- Sidebar -->
-  <aside class="col-lg-3 mb-5 mb-lg-0">
-    <div class="sticky-sidebar">
-      <h5 class="fw-bold mb-3">Categories</h5>
-      <ul class="list-unstyled text-muted small">
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Getting Started</a></li>
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Product Guide</a></li>
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Integrations</a></li>
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Collaboration</a></li>
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Billing &amp; Subscription</a></li>
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Developers &amp; APIs</a></li>
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Support &amp; Troubleshooting</a></li>
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Best Practices</a></li>
-        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Resources</a></li>
-      </ul>
-    </div>
-  </aside>
+<aside class="col-lg-3 mb-5 mb-lg-0">
+  <div class="sticky-sidebar">
+    <ul class="list-unstyled text-muted small sidebar-links">
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Getting Started</a></li>
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Product Guide</a></li>
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Integrations</a></li>
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Collaboration</a></li>
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Billing &amp; Subscription</a></li>
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Developers &amp; APIs</a></li>
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Support &amp; Troubleshooting</a></li>
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Best Practices</a></li>
+      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Resources</a></li>
+    </ul>
+  </div>
+</aside>
 
   <!-- Article Content -->
   <div class="col-lg-9">
     <article class="help-article">
-      <header class="mb-5">
-        <h1 class="fw-bold mb-3">{{ data.title }}</h1>
-        <div class="d-flex align-items-center mb-4">
-          {% if data.author_image %}
-            <img src="{{ data.author_image }}" alt="Author" class="rounded-circle me-3" width="40" height="40">
-          {% endif %}
-          <div>
-            <div class="fw-semibold">Written By: {{ data.author or "Momentum Team" }}</div>
-            <div class="text-muted small">Last updated: {{ data.timestamp.strftime('%B %d, %Y') if data.timestamp else "Recently" }}</div>
-          </div>
-        </div>
-      </header>
+<header class="mb-5 text-center">
+  <h1 class="fw-bold mb-3">{{ data.title }}</h1>
+  <div class="d-flex flex-column align-items-center justify-content-center mb-4">
+    {% if data.author_image %}
+      <img src="{{ data.author_image }}" alt="Author" class="rounded-circle mb-2" width="50" height="50">
+    {% endif %}
+    <div>
+      <div class="fw-semibold">Written By: {{ data.author or "Momentum Team" }}</div>
+      <div class="text-muted small">Last updated: {{ data.timestamp.strftime('%B %d, %Y') if data.timestamp else "Recently" }}</div>
+    </div>
+  </div>
+</header>
 
       <div class="article-body text-muted lh-lg">
         {% if data.content %}
@@ -69,7 +71,7 @@
     </article>
   </div>
 </div>
-```
+
 
   </div>
 </div>
@@ -82,13 +84,7 @@ body {
 .help-wrapper {
   color: #1a1a1a;
 }
-.breadcrumb {
-  margin-bottom: 2rem;
-}
-.breadcrumb-item + .breadcrumb-item::before {
-  content: "›";
-  color: #6b7280;
-}
+
 .sticky-sidebar {
   position: sticky;
   top: 100px;
@@ -124,9 +120,52 @@ body {
 .side-bar a:hover {
   color: #2563eb;
 }
-*{
-  color:black
+
+.breadcrumb {
+  letter-spacing: 0.2px;
 }
+.breadcrumb a {
+  transition: opacity 0.2s ease;
+}
+.breadcrumb a:hover {
+  opacity: 1 !important;
+  text-decoration: underline;
+}
+header h1 {
+  font-size: 2rem;
+  line-height: 1.3;
+}
+header img {
+  border: 2px solid #e9ecef;
+}
+header .fw-semibold {
+  font-size: 0.95rem;
+}
+header .text-muted {
+  font-size: 0.82rem;
+}
+
+.sticky-sidebar {
+  position: sticky;
+  top: 100px; /* adjust if you have a fixed navbar */
+}
+
+.sidebar-links {
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.sidebar-links a {
+  display: block;
+  padding: 4px 0;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-links a:hover {
+  color: #0d6efd;
+  transform: translateX(3px);
+}
+
 </style>
 
 {% endblock %}
