@@ -1,72 +1,134 @@
 {% extends "base.html" %}
-
 {% block title %}{{ data.title }}{% endblock %}
 
-{% block header %}
-<header class="masthead" style="background-image: url('{{ data.bgimg }}')">
-  <div class="container position-relative px-4 px-lg-5">
-    <div class="row gx-4 gx-lg-5 justify-content-center">
-      <div class="col-md-10 col-lg-8 col-xl-7">
-        <div class="post-heading text-white">
-          <h1>{{ data.title }}</h1>
-          <h2 class="subheading">{{ data.headline }}</h2>
-          <span class="meta">
-            Posted by <a href="#!">{{ data.author }}</a> on {{ data.timestamp.strftime('%B %d, %Y') }}
-          </span>
-                   <div class="mt-2 flex flex-wrap gap-2">
-                        {% if data.page_id %}
-                        {{ data.page_id if data.page_id else 'N/A' }} |
-                              {% endif %}
-                        {% if data.visibility %}
-                            {{ data.visibility }}
-                        {% endif %}
-                        {% if data.category %}
-                            <span class="badge bg-primary">{{ data.category }}</span>
-                        {% endif %}
-                        {% if data.tags %}
-                            {% for tag in data.tags.split(',') %}
-                                <span class="badge bg-success">{{ tag.strip() }}</span>
-                            {% endfor %}
-                        {% endif %}
-                        {% if data.status %}
-                            <span class="badge bg-warning text-dark">{{ data.status|capitalize }}</span>
-                        {% endif %}
-                    </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</header>
-{% endblock %}
-
 {% block content %}
-<article class="mb-4">
-  <div class="container px-4 px-lg-5">
-    <div class="row gx-4 gx-lg-5 justify-content-center">
-      <div class="col-md-10 col-lg-8 col-xl-7">
-        {{ data.content | safe }}
-                
-                <div class="mt-3">
-                    <a href="{{ request.path }}/edit" class="btn btn-warning btn-sm">Edit Page</a>
-                </div>
-      </div>
+
+<div class="help-wrapper mt-5 py-5">
+  <div class="container">
+    <!-- Breadcrumb -->
+    <ol class="breadcrumb mb-4 bg-transparent p-0 small">
+      <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-primary">Home</a></li>
+      <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-primary">Getting Started</a></li>
+      <li class="breadcrumb-item active text-muted">{{ data.title }}</li>
+    </ol>
+
+```
+<!-- Main Content Section -->
+<div class="row">
+  <!-- Sidebar -->
+  <aside class="col-lg-3 mb-5 mb-lg-0">
+    <div class="sticky-sidebar">
+      <h5 class="fw-bold mb-3">Categories</h5>
+      <ul class="list-unstyled text-muted small">
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Getting Started</a></li>
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Product Guide</a></li>
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Integrations</a></li>
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Collaboration</a></li>
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Billing &amp; Subscription</a></li>
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Developers &amp; APIs</a></li>
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Support &amp; Troubleshooting</a></li>
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Best Practices</a></li>
+        <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Resources</a></li>
+      </ul>
     </div>
+  </aside>
+
+  <!-- Article Content -->
+  <div class="col-lg-9">
+    <article class="help-article">
+      <header class="mb-5">
+        <h1 class="fw-bold mb-3">{{ data.title }}</h1>
+        <div class="d-flex align-items-center mb-4">
+          {% if data.author_image %}
+            <img src="{{ data.author_image }}" alt="Author" class="rounded-circle me-3" width="40" height="40">
+          {% endif %}
+          <div>
+            <div class="fw-semibold">Written By: {{ data.author or "Momentum Team" }}</div>
+            <div class="text-muted small">Last updated: {{ data.timestamp.strftime('%B %d, %Y') if data.timestamp else "Recently" }}</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="article-body text-muted lh-lg">
+        {% if data.content %}
+          {{ data.content | safe }}
+        {% else %}
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sodales, ligula non congue placerat, felis nibh dapibus risus, id sollicitudin quam libero ac libero. Ut massa massa, varius vitae volutpat in, sodales et mi.</p>
+          <div class="theme-callout theme-callout-info my-4 p-4 rounded-3">
+            <strong>This is an info callout.</strong> Example text to show it in action. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean mollis sem sit amet tempus interdum, ex ex egestas dui.
+          </div>
+          <h2 class="fw-bold fs-5 mt-4">1. Sub Heading Lorem Ipsum</h2>
+          <p>Vestibulum id ex ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec vel leo augue. Integer non mauris consectetur, euismod orci sed, porttitor odio.</p>
+        {% endif %}
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <a href="{{ request.path }}/edit" class="btn btn-outline-primary btn-sm">✏️ Edit Page</a>
+        <a href="/" class="btn btn-outline-secondary btn-sm">← Back</a>
+      </div>
+    </article>
   </div>
-</article>
+</div>
+```
+
+  </div>
+</div>
 
 <style>
-@media (min-width: 1200px) {
-    .col-xl-7 {
-        flex: 0 0 auto;
-        width: 70.333333%;
-    }
+body {
+  background-color: #f9fafc;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
-
-@media (min-width: 992px) {
-    header.masthead {
-        padding-top: 12.5rem;
-        padding-bottom: 2rem;
-    }
+.help-wrapper {
+  color: #1a1a1a;
+}
+.breadcrumb {
+  margin-bottom: 2rem;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+  content: "›";
+  color: #6b7280;
+}
+.sticky-sidebar {
+  position: sticky;
+  top: 100px;
+}
+.help-article {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.help-article h1 {
+  font-size: 1.9rem;
+  color: #111827;
+}
+.help-article h2 {
+  color: #111827;
+}
+.help-article a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.help-article a:hover {
+  text-decoration: none;
+}
+.theme-callout-info {
+  background-color: #e9f3ff;
+  border-left: 4px solid #007bff;
+  color: #0b3d91;
+}
+.side-bar h5 {
+  font-size: 1.1rem;
+  color: #111827;
+}
+.side-bar a:hover {
+  color: #2563eb;
+}
+*{
+  color:black
 }
 </style>
+
 {% endblock %}
+
+
