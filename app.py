@@ -71,10 +71,12 @@ def add_org():
     if request.method == "POST":
         name = request.form["name"]
         users = request.form.get("users", "")
+        category = request.form.get("category", "")
         mongo.db.organizations.insert_one({
             "user_id": session["user_id"],  # owner
             "name": name,
-            "users": [email.strip() for email in users.split(",") if email.strip()]
+            "users": [email.strip() for email in users.split(",") if email.strip()],
+            "category": [cat.strip() for cat in category.split(",") if cat.strip()]
         })
         return redirect(url_for("dashboard"))
     return render_template("new_org.html")
@@ -91,12 +93,14 @@ def edit_org(org_id):
 
     if request.method == "POST":
         name = request.form["name"]
-        users = request.form.get("users", "")
+        users = request.form.get("users", "") 
+        category = request.form.get("category", "")
         mongo.db.organizations.update_one(
             {"_id": ObjectId(org_id)},
             {"$set": {
                 "name": name,
-                "users": [email.strip() for email in users.split(",") if email.strip()]
+                "users": [email.strip() for email in users.split(",") if email.strip()],
+                "category": [cat.strip() for cat in category.split(",") if cat.strip()]
             }}
         )
         return redirect(url_for("dashboard"))
@@ -132,16 +136,10 @@ def org_pages(org_id):
     if not org or not has_org_access(org):
         return "Access denied", 403
 
-    # Show all pages in org that are public or accessible to user
+    # Show all pages in org 
     user_email = session.get("email")
     pages = list(mongo.db.pages.find({
-        "org_id": org_id,
-        "$or": [
-            {"visibility": "Public"},
-            {"visibility": "Team", "org_id": org_id},
-            {"visibility": "Private", "author": user_email}
-        ]
-    }).sort("page_id", 1))
+        "org_id": org_id}).sort("page_id", 1))
 
     return render_template("org_pages.html", org=org, pages=pages)
 
@@ -167,14 +165,13 @@ def new_page(org_id):
             "category": request.form.get("category"),
             "tags": request.form.get("tags"),
             "status": request.form.get("status", "pending"),
-            "visibility": request.form.get("visibility", "Team"),
             "bgimg": request.form.get("bgimg"),
             "created_at": datetime.utcnow()
         }
         mongo.db.pages.insert_one(page_data)
         return redirect(url_for("org_pages", org_id=org_id))
 
-    return render_template("new_page.html", org_id=org_id)
+    return render_template("new_page.html", org_id=org_id,org=org)
 
 @app.route("/<org_id>/page/<int:page_id>/edit", methods=["GET", "POST"])
 def edit_page(org_id, page_id):
@@ -193,7 +190,6 @@ def edit_page(org_id, page_id):
                 "title": request.form["title"],
                 "subtitle": request.form.get("subtitle"),
                 "content": request.form["content"],
-                "visibility": request.form.get("visibility", "Team"),
                 "category": request.form.get("category"),
                 "tags": request.form.get("tags"),
                 "status": request.form.get("status", "pending"),
@@ -203,7 +199,7 @@ def edit_page(org_id, page_id):
         )
         return redirect(url_for("view_page", org_id=org_id, page_id=page_id))
 
-    return render_template("edit_page.html", page=page, org_id=org_id)
+    return render_template("new_page.html", page=page, org_id=org_id,org=org)
 
 
 @app.route("/<org_id>/page/<int:page_id>")
@@ -213,18 +209,13 @@ def view_page(org_id, page_id):
     if not page:
         return "Page not found", 404
 
-    # Public pages are always accessible
-    if page.get("visibility") != "Public":
-        # For private or team pages, enforce login
-        if "user_id" not in session:
-            return redirect(url_for("login"))
 
-        org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
-        if not org or not has_org_access(org):
-            return "Access denied", 403
-    else:
-        # Optional: fetch org for display even if public
-        org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org or not has_org_access(org):
+        return "Access denied", 403
 
     timestamp = page.get("created_at", datetime.utcnow())
 
@@ -239,7 +230,6 @@ def view_page(org_id, page_id):
         "category": page.get("category") or "",
         "tags": page.get("tags") or "",
         "status": page.get("status") or "pending",
-        "visibility": page.get("visibility", "Private")
     }
 
     return render_template("view_page.html", data=data, org=org)
