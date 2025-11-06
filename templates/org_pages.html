@@ -1,168 +1,92 @@
 {% extends "base.html" %}
-{% block title %}{{ org.name }} - Pages{% endblock %}
+{% block title %}{{ org.name }} - Knowledge Base{% endblock %}
 
 {% block header %}
-<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}')">
-  <div class="container text-center text-white"></div>
-</header>
+
+<div class="page-heading-holder text-white" style="background-image: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}'); background-size: cover; background-position: center;">
+  <div class="container text-center py-5">
+    <h1 class="page-heading mb-3 fw-bold">Welcome to Our Knowledge Base</h1>
+    <div class="page-heading-sub single-col-max mx-auto">
+      <div class="help-search-intro mb-4 fs-5">
+        Find articles and resources to help with your questions.
+      </div>
+      <div class="help-search-main pt-4 d-block mx-auto" style="max-width: 600px;">
+        <form method="GET" action="{{ url_for('search', org_id=org._id) }}" class="search-form w-100 d-flex shadow-sm rounded-3 overflow-hidden">
+          <input type="text" placeholder="Search the knowledge base..." name="q" class="form-control search-input border-0 px-3 py-2" required>
+          <button type="submit" class="btn btn-primary search-btn px-4 d-flex align-items-center justify-content-center">
+            <svg width="18px" height="18px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <path fill="white" d="M11.73 1.57C9.15-0.64 5.3-0.5 2.9 1.9 0.5 4.3 0.35 8.16 2.57 10.74c2.21 2.57 6.03 3 8.78.99l.01.01c.03.04.06.08.1.11l3.85 3.85a1 1 0 0 0 1.41-1.41l-3.85-3.85a1.02 1.02 0 0 0-.1-.1c2.01-2.74 1.57-6.56-1.04-8.77zM7.5 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="container px-4 px-lg-5 mt-5">
 
-  <!-- Search Bar + View Toggle -->
-  <div class="d-flex mb-4 align-items-center">
-    <form method="GET" action="{{ url_for('search', org_id=org._id) }}" class="d-flex flex-grow-1 me-3">
-      <input type="text" class="form-control me-2" name="q" placeholder="Search pages..." required>
-      <button type="submit" class="btn btn-primary">Search</button>
-    </form>
-
-    <!-- View Toggle Buttons as small icons -->
-    <div class="btn-group" role="group" aria-label="View toggle">
-      <button type="button" class="btn btn-outline-secondary btn-sm active" data-view="list" title="List View">
-        <i class="bi bi-list">L</i>
-      </button>
-      <button type="button" class="btn btn-outline-secondary btn-sm" data-view="card" title="Card View">
-        <i class="bi bi-grid-3x3-gap">C</i>
-      </button>
-      <button type="button" class="btn btn-outline-secondary btn-sm" data-view="table" title="Table View">
-        <i class="bi bi-table">T</i>
-      </button>
-    </div>
+<div class="container my-5">
+  <div class="section-header text-center mb-5">
+    <h2 class="section-title mb-3">Popular Articles</h2>
+    <p class="text-muted small">Browse through our most-read and helpful resources.</p>
   </div>
 
-  <!-- List View (default) -->
-  <div id="view-list">
+  <div class="row g-4">
     {% if pages %}
-      {% for page in pages %}
-        <div class="post-preview mb-4 p-3 border rounded shadow-sm hover-shadow">
-          <a href="/{{ org._id }}/page/{{ page.page_id }}" class="text-decoration-none text-dark">
-            <h5 class="mb-1">{{ page.title }}</h5>
-            <p class="text-muted mb-0">{{ page.subtitle }}</p>
-            <small class="text-muted">ID: {{ page.page_id }} | Visibility: {{ page.visibility }} | Category: {{ page.category }} | Tags: {{ page.tags }}</small>
+      {% for page in pages|reverse %}
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="item-inner border rounded-3 p-4 h-100 bg-white shadow-sm transition-all">
+          <a class="item-link text-decoration-none text-dark" href="/{{ org._id }}/page/{{ page.page_id }}">
+            <h3 class="item-heading h6 fw-semibold mb-2">{{ page.title }}</h3>
+            <p class="item-desc text-muted small mb-0">{{ page.subtitle or "Learn more about this topic." }}</p>
           </a>
         </div>
+      </div>
       {% endfor %}
     {% else %}
-      <p>No pages yet. Create one below!</p>
+      <p class="text-center text-muted">No articles available yet.</p>
     {% endif %}
   </div>
 
-  <!-- Card View -->
-  <div id="view-card" class="row g-4 d-none">
-    {% for page in pages %}
-      <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm h-100 hover-shadow border-0 rounded-3">
-          <div class="card-body d-flex flex-column justify-content-between">
-            <div>
-              <h5 class="card-title">{{ page.title }}</h5>
-              <p class="card-text text-muted">{{ page.subtitle }}</p>
-              <small class="text-muted">ID: {{ page.page_id }} | Visibility: {{ page.visibility }} | Category: {{ page.category }} | Tags: {{ page.tags }}</small>
-            </div>
-            <a href="/{{ org._id }}/page/{{ page._id }}" class="btn btn-sm btn-primary mt-3 align-self-start">Open</a>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
+  <div class="text-center mt-5">
+    <a href="/{{ org._id }}/new" class="btn btn-primary px-4 py-2 fw-semibold">+ Create New Article</a>
   </div>
-
-  <!-- Table View -->
-  <div id="view-table" class="table-responsive d-none">
-    <table class="table align-middle table-hover border rounded shadow-sm mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Page ID</th>
-          <th>Title</th>
-          <th>Subtitle</th>
-          <th>Category</th>
-          <th>Tags</th>
-          <th>Visibility</th>
-          <th class="text-end">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for page in pages %}
-        <tr class="hover-shadow-sm">
-          <td>{{ page.page_id }}</td>
-          <td>{{ page.title }}</td>
-          <td class="text-muted">{{ page.subtitle }}</td>
-          <td>{{ page.category }}</td>
-          <td>{{ page.tags }}</td>
-          <td>{{ page.visibility }}</td>
-          <td class="text-end">
-            <a href="/{{ org._id }}/page/{{ page.page_id }}" class="btn btn-sm btn-outline-primary">View</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <a class="btn btn-primary mt-4" href="/{{ org._id }}/new">+ Create New Page</a>
 </div>
 
 <style>
-/* Masthead */
-@media (min-width: 992px) {
-  header.masthead {
-    padding-top: 3rem;
-    padding-bottom: 1rem;
-  }
-}
-
-/* View toggle active button */
-.btn-group .btn.active {
+.page-heading-holder {
   background-color: #0d6efd;
   color: #fff;
-  border-color: #0d6efd;
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+  position: relative;
 }
 
-/* Hover effects for cards and list */
-.hover-shadow:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
-  transition: 0.3s;
-}
-.hover-shadow-sm:hover {
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
-  transition: 0.3s;
+.search-input:focus {
+  box-shadow: none;
+  outline: none;
 }
 
-/* Card customization */
-.card {
-  transition: 0.3s;
+.item-inner {
+  border-color: #e0e0e0 !important;
+  background: #fff;
+  transition: all 0.3s ease;
 }
-.card:hover {
-  transform: translateY(-3px);
+.item-inner:hover {
+  transform: translateY(-4px);
+  background: #f9fafb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* Table customization */
-.table-hover tbody tr:hover {
-  background-color: #f8f9fa;
+.section-title {
+  font-weight: 600;
 }
-.table td, .table th {
-  vertical-align: middle;
+
+.transition-all {
+  transition: all 0.25s ease-in-out;
 }
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const buttons = document.querySelectorAll('.btn-group button');
-  const views = ['list', 'card', 'table'];
-
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      views.forEach(v => {
-        const el = document.getElementById('view-' + v);
-        if(el) el.classList.add('d-none');
-      });
-
-      const view = btn.getAttribute('data-view');
-      document.getElementById('view-' + view).classList.remove('d-none');
-    });
-  });
-});
-</script>
 {% endblock %}
