@@ -242,18 +242,32 @@ def search(org_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    query = request.args.get("q", "")
+    query = request.args.get("q", "").strip()
+    category = request.args.get("category", "").strip()
     results = []
 
+    # Build the MongoDB filter dynamically
+    search_filter = {"org_id": org_id}
+
     if query:
-        results = list(mongo.db.pages.find({
-            "org_id": org_id,
-            "$text": {"$search": query}
-        }))
+        search_filter["$text"] = {"$search": query}
+
+    if category:
+        search_filter["category"] = category
+
+    # Run the query if either query or category is provided
+    if query or category:
+        results = list(mongo.db.pages.find(search_filter))
 
     org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
-    return render_template("search.html", results=results, query=query, org=org)
 
+    return render_template(
+        "search.html",
+        results=results,
+        query=query,
+        category=category,
+        org=org
+    )
 
 @app.route("/landing")
 def landing():
