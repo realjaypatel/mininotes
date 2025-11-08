@@ -8,10 +8,10 @@
     <!-- Breadcrumb -->
 <ol class="breadcrumb mb-4 bg-transparent p-0 small" style="font-size: 0.83rem;">
   <li class="breadcrumb-item">
-    <a href="/" class="text-decoration-none text-primary opacity-75 hover-opacity-100">Home</a>
+    <a href="/{{ org['_id'] }}" class="text-decoration-none text-primary opacity-75 hover-opacity-100">{{ org.name }}</a>
   </li>
   <li class="breadcrumb-item">
-    <a href="#" class="text-decoration-none text-primary opacity-75 hover-opacity-100">Getting Started</a>
+    <a href="{{ url_for('search', org_id=org['_id'], q=query, category=data.category) }}" class="text-decoration-none text-primary opacity-75 hover-opacity-100">{{data.category}}</a>
   </li>
   <li class="breadcrumb-item active text-muted">{{ data.title }}</li>
 </ol>
@@ -22,15 +22,14 @@
 <aside class="col-lg-3 mb-5 mb-lg-0">
   <div class="sticky-sidebar">
     <ul class="list-unstyled text-muted small sidebar-links">
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Getting Started</a></li>
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Product Guide</a></li>
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Integrations</a></li>
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Collaboration</a></li>
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Billing &amp; Subscription</a></li>
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Developers &amp; APIs</a></li>
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Support &amp; Troubleshooting</a></li>
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Best Practices</a></li>
-      <li class="mb-2"><a href="#" class="text-decoration-none text-dark">Resources</a></li>
+    {% if org.category %}
+      {% set cat_list = org.category.split(',') if org.category is string else org.category %}
+      {% for cat in cat_list %}
+              <li class="mb-2"><a href="#" class="text-decoration-none text-dark">{{cat}}</a></li>
+
+      {% endfor %}
+    {% endif %}
+
     </ul>
   </div>
 </aside>

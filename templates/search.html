@@ -19,6 +19,25 @@
             </svg>
           </button>
         </form>
+{% if org.category %}
+  {% set cat_list = org.category.split(',') if org.category is string else org.category %}
+
+  <div class="mt-4 p-3 bg-white rounded-4 shadow-sm">
+    <div class="d-flex flex-wrap gap-2">
+      {% for cat in cat_list %}
+        {% set cat_clean = cat.strip() %}
+        <a href="{{ url_for('search', org_id=org._id, q=query, category=cat_clean) }}"
+           class="btn btn-sm rounded-pill {% if cat_clean == category %}btn-primary text-white{% else %}btn-outline-primary{% endif %}">
+           {{ cat_clean }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+
+
+
       </div>
     </div>
   </div>
@@ -54,7 +73,7 @@
   {% endfor %}
 </div>
 
-{% else %} <div class="text-center py-5"> <h3 class="fw-semibold mb-3">No results found</h3> <p class="text-muted mb-4">We couldn’t find any matches for “{{ query }}” in {{ org.name }}.</p> <a href="{{ url_for('home', org_id=org._id) }}" class="btn btn-primary">Back to Knowledge Base</a> </div>
+{% else %} <div class="text-center py-5"> <h3 class="fw-semibold mb-3">No results found</h3> <p class="text-muted mb-4">We couldn’t find any matches for “{{ query }}” in {{ org.name }}.</p> <a href="/{{ org['_id'] }}" class="btn btn-primary">Back to Knowledge Base</a> </div>
 {% endif %}
 
 </div>
