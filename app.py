@@ -7,7 +7,7 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = "secretkey"
 app.config["MONGO_URI"] = "mongodb+srv://user:user@cluster0.u3fdtma.mongodb.net/md3"
-
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 MB
 mongo = PyMongo(app)
 
 # ------------------ AUTH ------------------
@@ -132,17 +132,35 @@ def org_pages(org_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    # Fetch org
     org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
     if not org or not has_org_access(org):
         return "Access denied", 403
 
-    # Show all pages in org 
-    user_email = session.get("email")
-    pages = list(mongo.db.pages.find({
-        "org_id": org_id}).sort("page_id", 1))
+    # Read search params
+    query = request.args.get("q", "").strip()
+    category = request.args.get("category", "").strip()
 
-    return render_template("org_pages.html", org=org, pages=pages)
+    # Build search filter
+    search_filter = {"org_id": org_id}
 
+    if query:
+        search_filter["$text"] = {"$search": query}
+
+    if category:
+        search_filter["category"] = category
+
+    # Fetch pages (filtered if query or category is given)
+    pages = list(mongo.db.pages.find(search_filter).sort("page_id", 1))
+
+    return render_template(
+        "org_pages.html",       # your org home template
+        org=org,
+        pages=pages,
+        query=query,
+        category=category,
+        searching=bool(query or category)
+    )
 
 @app.route("/<org_id>/new", methods=["GET", "POST"])
 def new_page(org_id):
@@ -237,37 +255,6 @@ def view_page(org_id, page_id):
 
 # ------------------ SEARCH ------------------
 
-@app.route("/<org_id>/search")
-def search(org_id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    query = request.args.get("q", "").strip()
-    category = request.args.get("category", "").strip()
-    results = []
-
-    # Build the MongoDB filter dynamically
-    search_filter = {"org_id": org_id}
-
-    if query:
-        search_filter["$text"] = {"$search": query}
-
-    if category:
-        search_filter["category"] = category
-
-    # Run the query if either query or category is provided
-    if query or category:
-        results = list(mongo.db.pages.find(search_filter))
-
-    org = mongo.db.organizations.find_one({"_id": ObjectId(org_id)})
-
-    return render_template(
-        "search.html",
-        results=results,
-        query=query,
-        category=category,
-        org=org
-    )
 
 @app.route("/landing")
 def landing():
