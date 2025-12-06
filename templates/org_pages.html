@@ -1,92 +1,219 @@
 {% extends "base.html" %}
 {% block title %}{{ org.name }} - Knowledge Base{% endblock %}
 
-{% block header %}
-
-<div class="page-heading-holder text-white" style="background-image: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}'); background-size: cover; background-position: center;">
-  <div class="container text-center py-5">
-    <h1 class="page-heading mb-3 fw-bold">Welcome to {{ org.name }} Knowledge Base</h1>
-    <div class="page-heading-sub single-col-max mx-auto">
-      <div class="help-search-intro mb-4 fs-5">
-        Find articles and resources to help with your questions.
-      </div>
-      <div class="help-search-main pt-4 d-block mx-auto" style="max-width: 600px;">
-        <form method="GET" action="{{ url_for('search', org_id=org._id) }}" class="search-form w-100 d-flex shadow-sm rounded-3 overflow-hidden">
-          <input type="text" placeholder="Search the knowledge base..." name="q" class="form-control search-input border-0 px-3 py-2" required>
-          <button type="submit" class="btn btn-primary search-btn px-4 d-flex align-items-center justify-content-center">
-            <svg width="18px" height="18px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-              <path fill="white" d="M11.73 1.57C9.15-0.64 5.3-0.5 2.9 1.9 0.5 4.3 0.35 8.16 2.57 10.74c2.21 2.57 6.03 3 8.78.99l.01.01c.03.04.06.08.1.11l3.85 3.85a1 1 0 0 0 1.41-1.41l-3.85-3.85a1.02 1.02 0 0 0-.1-.1c2.01-2.74 1.57-6.56-1.04-8.77zM7.5 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z"/>
-            </svg>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
 {% block content %}
 
-<div class="container my-5">
-  <div class="section-header text-center mb-5">
-    <h2 class="section-title mb-3">Popular Articles</h2>
-    <p class="text-muted small">Browse through our most-read and helpful resources.</p>
-  </div>
+<div class="container" style="max-width: 900px;">
 
-  <div class="row g-4">
-    {% if pages %}
-      {% for page in pages|reverse %}
-      <div class="col-12 col-md-6 col-lg-3">
-        <div class="item-inner border rounded-3 p-4 h-100 bg-white shadow-sm transition-all">
-          <a class="item-link text-decoration-none text-dark" href="/{{ org._id }}/page/{{ page.page_id }}">
-            <h3 class="item-heading h6 fw-semibold mb-2">{{ page.title }}</h3>
-            <p class="item-desc text-muted small mb-0">{{ page.subtitle or "Learn more about this topic." }}</p>
-          </a>
-        </div>
-      </div>
-      {% endfor %}
+    <!-- ===================== CLEAN HERO HEADER ===================== -->
+    <div style="
+        background: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}') center/cover no-repeat;
+        padding: 70px 20px;
+        color: #222;
+        text-align: center;
+        border-radius: 12px;
+        margin: 40px 0;
+        background-blend-mode: lighten;
+        background-color: rgba(255,255,255,0.75);
+    ">
+        <h1 style="font-weight:700; font-size:32px;">
+            {{ org.name }} Knowledge Base
+        </h1>
+
+        {% if searching %}
+            <p style="font-size:16px; color:#444; margin-top:10px;">
+                Search results for: <b>{{ query }}</b>
+            </p>
+        {% else %}
+            <p style="font-size:16px; color:#555; margin-top:10px;">
+                Find articles, guides, and helpful resources.
+            </p>
+        {% endif %}
+
+        <!-- SEARCH BAR -->
+        <form method="GET" action="/{{ org._id }}" style="max-width:550px; margin:25px auto;">
+            <div class="input-group input-group-lg">
+                <input type="text" class="form-control"
+                       name="q" value="{{ query }}"
+                       placeholder="Search articles..."
+                       style="border-radius:6px 0 0 6px;">
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" style="border-radius:0 6px 6px 0;">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </span>
+            </div>
+        </form>
+    </div>
+
+
+    <!-- ===================== SEARCH STATE ===================== -->
+    {% if searching %}
+        {% if pages|length == 0 %}
+            <div class="alert alert-warning text-center">
+                No articles found for "<b>{{ query }}</b>".
+            </div>
+        {% else %}
+            <h3 style="font-weight:600; margin:20px 0; color:#222;">
+                {{ pages|length }} result{{ pages|length != 1 and "s" or "" }}
+            </h3>
+        {% endif %}
     {% else %}
-      <p class="text-center text-muted">No articles available yet.</p>
+        <h3 style="font-weight:600; margin:20px 0; color:#222;">
+            Latest Articles
+        </h3>
     {% endif %}
-  </div>
 
-  <div class="text-center mt-5">
-    <a href="/{{ org._id }}/new" class="btn btn-primary px-4 py-2 fw-semibold">+ Create New Article</a>
-  </div>
+
+
+    <!-- ===================== ARTICLE FEED ===================== -->
+    {% if pages %}
+        {% for page in pages|reverse %}
+        <a href="/{{ org._id }}/page/{{ page.page_id }}" class="kb-card-link">
+
+            <div class="kb-card">
+
+                <!-- HEADER ROW -->
+                <div class="kb-card-header">
+                    <div class="kb-avatar">
+                        {{ (page.author or "A")[0]|upper }}
+                    </div>
+
+                    <div>
+                        <div class="kb-card-title">{{ page.title }}</div>
+
+                        <div class="kb-card-meta">
+                            {% if page.author %}
+                                Owned by <b>{{ page.author }}</b>
+                            {% endif %}
+
+                            • {{ page.timestamp.strftime('%b %d, %Y') if page.timestamp else "Recently" }}
+
+                            {% if page.category %}
+                                • <span class="kb-tag">{{ page.category }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DESCRIPTION -->
+                <div class="kb-card-body">
+                    {{ (page.subtitle or "No description available.")[:250] }}…
+                </div>
+
+                <!-- FOOTER -->
+                <div class="kb-card-footer">
+                    <i class="fa fa-comments-o"></i>
+                    {{ page.comments|length if page.comments else 0 }} comments
+                </div>
+
+            </div>
+        </a>
+        {% endfor %}
+    {% endif %}
+
+
+
+    <!-- ===================== ADD NEW ARTICLE ===================== -->
+    <div class="text-center" style="margin-top:40px;">
+        <a href="/{{ org._id }}/new" class="btn btn-primary btn-lg" style="border-radius:6px;">
+            <i class="fa fa-plus"></i> Create New Article
+        </a>
+    </div>
+
 </div>
 
+
+
+<!-- ===================== LIGHT THEME STYLING ===================== -->
 <style>
-.page-heading-holder {
-  background-color: #0d6efd;
-  color: #fff;
-  padding-top: 6rem;
-  padding-bottom: 6rem;
-  position: relative;
+
+body {
+    background: #fafafa !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.search-input:focus {
-  box-shadow: none;
-  outline: none;
+/* card link reset */
+.kb-card-link {
+    text-decoration:none;
+    color:inherit;
 }
 
-.item-inner {
-  border-color: #e0e0e0 !important;
-  background: #fff;
-  transition: all 0.3s ease;
+/* main article card */
+.kb-card {
+    background:white;
+    border:1px solid #e5e7eb;
+    padding:22px;
+    margin-bottom:22px;
+    border-radius:10px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.06);
+    transition:0.25s ease;
 }
-.item-inner:hover {
-  transform: translateY(-4px);
-  background: #f9fafb;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+.kb-card:hover {
+    transform:translateY(-3px);
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
 
-.section-title {
-  font-weight: 600;
+/* header row */
+.kb-card-header {
+    display:flex;
+    align-items:center;
+    margin-bottom:12px;
 }
 
-.transition-all {
-  transition: all 0.25s ease-in-out;
+/* avatar */
+.kb-avatar {
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#d6e4ff;
+    color:#2f54eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:16px;
+    margin-right:12px;
 }
+
+/* title */
+.kb-card-title {
+    font-size:17px;
+    font-weight:600;
+    color:#111;
+}
+
+/* metadata row */
+.kb-card-meta {
+    font-size:13px;
+    color:#666;
+    margin-top:2px;
+}
+
+/* tag */
+.kb-tag {
+    background:#eef2ff;
+    color:#3f51b5;
+    padding:2px 6px;
+    border-radius:4px;
+    font-size:11px;
+}
+
+/* description */
+.kb-card-body {
+    font-size:14px;
+    color:#444;
+    margin:10px 0 8px 0;
+    line-height:1.6;
+}
+
+/* footer */
+.kb-card-footer {
+    font-size:12px;
+    color:#777;
+    margin-top:8px;
+}
+
 </style>
 
 {% endblock %}

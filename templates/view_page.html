@@ -1,175 +1,96 @@
 {% extends "base.html" %}
-{% block title %}{{ data.title }}{% endblock %}
+{% block title %}{{ data.title }} :: MiniNotes{% endblock %}
 
 {% block content %}
 
-<div class="help-wrapper mt-5 py-5">
-  <div class="container">
-    <!-- Breadcrumb -->
-<ol class="breadcrumb mb-4 bg-transparent p-0 small" style="font-size: 0.83rem;">
-  <li class="breadcrumb-item">
-    <a href="/{{ org['_id'] }}" class="text-decoration-none text-primary opacity-75 hover-opacity-100">{{ org.name }}</a>
-  </li>
-  <li class="breadcrumb-item">
-    <a href="{{ url_for('search', org_id=org['_id'], q=query, category=data.category) }}" class="text-decoration-none text-primary opacity-75 hover-opacity-100">{{data.category}}</a>
-  </li>
-  <li class="breadcrumb-item active text-muted">{{ data.title }}</li>
-</ol>
+<div class="container">
 
-<!-- Main Content Section -->
-<div class="row">
-  <!-- Sidebar -->
-<aside class="col-lg-3 mb-5 mb-lg-0">
-  <div class="sticky-sidebar">
-    <ul class="list-unstyled text-muted small sidebar-links">
-    {% if org.category %}
-      {% set cat_list = org.category.split(',') if org.category is string else org.category %}
-      {% for cat in cat_list %}
-              <li class="mb-2"><a href="#" class="text-decoration-none text-dark">{{cat}}</a></li>
+    <!-- =========================== DETAILS PANEL =========================== -->
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ data.title }}</h3>
+        </div>
 
-      {% endfor %}
-    {% endif %}
+        <div class="panel-body">
 
-    </ul>
-  </div>
-</aside>
+            <div class="row mb-2">
 
-  <!-- Article Content -->
-  <div class="col-lg-9">
-    <article class="help-article">
-<header class="mb-5 text-center">
-  <h1 class="fw-bold mb-3">{{ data.title }}</h1>
-  <div class="d-flex flex-column align-items-center justify-content-center mb-4">
-    {% if data.author_image %}
-      <img src="{{ data.author_image }}" alt="Author" class="rounded-circle mb-2" width="50" height="50">
-    {% endif %}
-    <div>
-      <div class="fw-semibold">Written By: {{ data.author or "Momentum Team" }}</div>
-      <div class="text-muted small">Last updated: {{ data.timestamp.strftime('%B %d, %Y') if data.timestamp else "Recently" }}</div>
+                <!-- CATEGORY -->
+                <div class="col-md-2"><strong>Category:</strong></div>
+                <div class="col-md-4">{{ data.category or 'General' }}</div>
+
+                <!-- LAST UPDATED -->
+                <div class="col-md-2"><strong>Updated:</strong></div>
+                <div class="col-md-4">
+                    {{ data.timestamp.strftime('%B %d, %Y') if data.timestamp else "Recently" }}
+                </div>
+            </div>
+
+            <div class="row mb-2">
+
+                <!-- AUTHOR -->
+                <div class="col-md-2"><strong>Author:</strong></div>
+                <div class="col-md-4">
+                    {{ data.author or "Momentum Team" }}
+                </div>
+
+                <!-- AUTHOR IMAGE -->
+                <div class="col-md-2"><strong>Author Pic:</strong></div>
+                <div class="col-md-4">
+                    {% if data.author_image %}
+                        <img src="{{ data.author_image }}" width="60" height="60" class="img-circle">
+                    {% else %}
+                        <span class="text-muted">N/A</span>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="panel-footer clearfix">
+            <a href="{{ request.path }}/edit" class="btn btn-warning btn-sm">
+                <i class="fa fa-pencil"></i> Edit Page
+            </a>
+
+            <a href="/{{ org['_id'] }}" class="btn btn-default btn-sm">
+                <i class="fa fa-arrow-left"></i> Back
+            </a>
+        </div>
     </div>
-  </div>
-</header>
 
-      <div class="article-body text-muted lh-lg">
-        {% if data.content %}
-          {{ data.content | safe }}
-        {% else %}
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sodales, ligula non congue placerat, felis nibh dapibus risus, id sollicitudin quam libero ac libero. Ut massa massa, varius vitae volutpat in, sodales et mi.</p>
-          <div class="theme-callout theme-callout-info my-4 p-4 rounded-3">
-            <strong>This is an info callout.</strong> Example text to show it in action. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean mollis sem sit amet tempus interdum, ex ex egestas dui.
-          </div>
-          <h2 class="fw-bold fs-5 mt-4">1. Sub Heading Lorem Ipsum</h2>
-          <p>Vestibulum id ex ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec vel leo augue. Integer non mauris consectetur, euismod orci sed, porttitor odio.</p>
-        {% endif %}
-      </div>
+    <!-- =========================== DESCRIPTION / CONTENT =========================== -->
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Description</h3>
+        </div>
 
-      <div class="d-flex gap-2 mt-4">
-        <a href="{{ request.path }}/edit" class="btn btn-outline-primary btn-sm">✏️ Edit Page</a>
-        <a href="/" class="btn btn-outline-secondary btn-sm">← Back</a>
-      </div>
-    </article>
-  </div>
+        <div class="panel-body" style="font-size:14px; line-height:1.7;">
+            {% if data.content %}
+                {{ data.content | safe }}
+            {% else %}
+                <p class="text-muted">No content available.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- =========================== CATEGORY LIST AT BOTTOM =========================== -->
+    {% if org.category %}
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h3 class="panel-title">Categories</h3>
+        </div>
+
+        <div class="panel-body">
+            {% set cat_list = org.category.split(',') if org.category is string else org.category %}
+            {% for cat in cat_list %}
+                <span class="label label-primary" style="margin-right:5px; margin-bottom:5px; display:inline-block;">
+                    {{ cat }}
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
 </div>
-
-
-  </div>
-</div>
-
-<style>
-body {
-  background-color: #f9fafc;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-}
-.help-wrapper {
-  color: #1a1a1a;
-}
-
-.sticky-sidebar {
-  position: sticky;
-  top: 100px;
-}
-.help-article {
-  background: transparent;
-  border: none;
-  padding: 0;
-}
-.help-article h1 {
-  font-size: 1.9rem;
-  color: #111827;
-}
-.help-article h2 {
-  color: #111827;
-}
-.help-article a {
-  color: #2563eb;
-  text-decoration: underline;
-}
-.help-article a:hover {
-  text-decoration: none;
-}
-.theme-callout-info {
-  background-color: #e9f3ff;
-  border-left: 4px solid #007bff;
-  color: #0b3d91;
-}
-.side-bar h5 {
-  font-size: 1.1rem;
-  color: #111827;
-}
-.side-bar a:hover {
-  color: #2563eb;
-}
-
-.breadcrumb {
-  letter-spacing: 0.2px;
-}
-.breadcrumb a {
-  transition: opacity 0.2s ease;
-}
-.breadcrumb a:hover {
-  opacity: 1 !important;
-  text-decoration: underline;
-}
-header h1 {
-  font-size: 2rem;
-  line-height: 1.3;
-}
-header img {
-  border: 2px solid #e9ecef;
-}
-header .fw-semibold {
-  font-size: 0.95rem;
-}
-header .text-muted {
-  font-size: 0.82rem;
-}
-
-.sticky-sidebar {
-  position: sticky;
-  top: 100px; /* adjust if you have a fixed navbar */
-}
-
-.sidebar-links {
-  font-size: 0.85rem;
-  line-height: 1.6;
-}
-
-.sidebar-links a {
-  display: block;
-  padding: 4px 0;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.sidebar-links a:hover {
-  color: #0d6efd;
-  transform: translateX(3px);
-}
-#mainNav {
-    background: gray;
-}
-
-</style>
 
 {% endblock %}
-
-
