@@ -1,24 +1,59 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="max-w-3xl mx-auto p-6 bg-white shadow-sm rounded-md">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-2xl font-semibold">Your Organizations</h3>
-    <a href="{{ url_for('new_org') }}" class="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 transition">
-      + New Organization
-    </a>
-  </div>
+{% block title %}Spaces — MiniNotes{% endblock %}
 
-  {% if not orgs %}
-    <p class="text-slate-500">No organizations yet. Create one using the button above.</p>
-  {% else %}
-    <ul class="space-y-2">
-      {% for org in orgs %}
-        <li class="flex justify-between items-center px-4 py-2 bg-white shadow-sm rounded-md hover:shadow-md transition">
-          <a href="{{ url_for('view_org', org=org.name) }}" class="font-medium">{{ org.name }}</a>
-          <a href="{{ url_for('edit_org', org_id=org._id) }}">Edit</a>
-        </li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+{% block content %}
+<div class="page-title" style="margin-bottom:20px;">Spaces</div>
+
+{% if not orgs %}
+<div class="empty-state">
+  <i class="fa fa-layer-group"></i>
+  <h3>No spaces yet</h3>
+  <p>Create your first space to start organising your team's knowledge.</p>
+  <a href="{{ url_for('add_org') }}" class="btn-cf btn-primary">
+    <i class="fa fa-plus"></i> New Space
+  </a>
 </div>
+{% else %}
+<div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+  <a href="{{ url_for('add_org') }}" class="btn-cf btn-primary">
+    <i class="fa fa-plus"></i> New Space
+  </a>
+</div>
+<div class="cf-box">
+  <table class="cf-table">
+    <thead>
+      <tr>
+        <th>Space</th>
+        <th>Members</th>
+        <th>Categories</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for org in orgs %}
+      <tr>
+        <td>
+          <a href="/{{ org._id }}" style="font-weight:600;">{{ org.name }}</a>
+        </td>
+        <td style="font-size:13px; color:var(--c-subtle);">
+          {{ org.users | join(', ') if org.users else '—' }}
+        </td>
+        <td>
+          {% if org.category %}
+            {% for cat in (org.category if org.category is not string else org.category.split(',')) %}
+              <span class="loz loz-blue">{{ cat.strip() }}</span>
+            {% endfor %}
+          {% else %}—{% endif %}
+        </td>
+        <td style="text-align:right;">
+          <a href="/{{ org._id }}/edit_org" class="btn-cf btn-subtle btn-sm">
+            <i class="fa fa-cog"></i> Settings
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 {% endblock %}

@@ -1,39 +1,100 @@
 {% extends "base.html" %}
+{% block title %}{{ "Edit Space" if org else "Create Space" }} — MiniNotes{% endblock %}
+
+{% block sidebar %}
+<div class="sb-section">
+  <div class="sb-label">Navigation</div>
+  <a href="/" class="sb-item"><i class="fa fa-home"></i> Home</a>
+  {% if org %}
+  <a href="/{{ org._id }}" class="sb-item"><i class="fa fa-arrow-left"></i> Back to Space</a>
+  {% endif %}
+</div>
+{% endblock %}
 
 {% block content %}
-<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}')">
-    <div class="container position-relative px-4 px-lg-5">
-        <div class="row gx-4 gx-lg-5 justify-content-center">
-            <div class="col-md-10 col-lg-8 col-xl-7">
-                <div class="site-heading">
-                    <h1>{{ org.name if org else "New Organization" }}</h1>
-                    <span class="subheading">{{ "Edit your organization" if org else "Create a new organization" }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</header>
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  <span class="sep">›</span>
+  {% if org %}
+    <a href="/{{ org._id }}">{{ org.name }}</a>
+    <span class="sep">›</span>
+    <span>Space Settings</span>
+  {% else %}
+    <span>New Space</span>
+  {% endif %}
+</div>
 
-<div class="container px-4 px-lg-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <form method="POST">
-                <div class="mb-3">
-                    <label for="name" class="form-label">Organization Name</label>
-                    <input type="text" class="form-control" name="name" id="name" required value="{{ org.name if org else '' }}">
-                </div>
-                <div class="mb-3">
-                    <label for="users" class="form-label">Users (comma-separated emails)</label>
-                    <input type="text" class="form-control" name="users" id="users" value="{{ org.users | join(', ') if org else '' }}">
-                </div>
-                <div class="mb-3">
-                    <label for="users" class="form-label">Category/Project (comma-separated emails)</label>
-                    <input type="text" class="form-control" name="category" id="category" value="{{ org.category | join(', ') if org else '' }}">
-                </div>
-                <button type="submit" class="btn btn-primary">{{ "Update" if org else "Create" }}</button>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
-            </form>
-        </div>
+<div style="max-width:600px;">
+  <div class="page-title" style="margin-bottom:6px;">
+    {{ "Space Settings" if org else "Create a New Space" }}
+  </div>
+  <p style="color:var(--c-subtle); margin-bottom:28px;">
+    {% if org %}
+      Update the name, collaborators, and categories for this space.
+    {% else %}
+      Spaces are where your team's knowledge lives. Give it a name to get started.
+    {% endif %}
+  </p>
+
+  <div class="cf-box">
+    <div class="cf-box-header">
+      <span>
+        <i class="fa fa-layer-group" style="margin-right:8px; color:var(--c-subtle);"></i>
+        {{ "Edit Space" if org else "Space Details" }}
+      </span>
     </div>
+    <div class="cf-box-body">
+      <form method="POST">
+
+        <div class="form-row">
+          <label class="cf-label" for="name">
+            Space Name <span style="color:#DE350B;">*</span>
+          </label>
+          <input type="text" class="cf-input" id="name" name="name" required
+                 placeholder="e.g. Engineering Docs, Product Specs…"
+                 value="{{ org.name if org else '' }}">
+        </div>
+
+        <div class="form-row">
+          <label class="cf-label" for="users">
+            Members
+            <span style="font-weight:400; color:var(--c-subtle);">— comma-separated email addresses</span>
+          </label>
+          <input type="text" class="cf-input" id="users" name="users"
+                 placeholder="alice@example.com, bob@example.com"
+                 value="{{ org.users | join(', ') if org and org.users else '' }}">
+          <div style="font-size:12px; color:var(--c-subtle); margin-top:5px;">
+            <i class="fa fa-info-circle"></i>
+            Members can view and edit all pages in this space.
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="cf-label" for="category">
+            Categories
+            <span style="font-weight:400; color:var(--c-subtle);">— comma-separated</span>
+          </label>
+          <input type="text" class="cf-input" id="category" name="category"
+                 placeholder="e.g. Backend, Frontend, Design, DevOps"
+                 value="{{ org.category | join(', ') if org and org.category else '' }}">
+          <div style="font-size:12px; color:var(--c-subtle); margin-top:5px;">
+            <i class="fa fa-info-circle"></i>
+            Categories help organise pages within this space.
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="display:flex; gap:10px;">
+          <button type="submit" class="btn-cf btn-primary">
+            <i class="fa fa-save"></i> {{ "Save Changes" if org else "Create Space" }}
+          </button>
+          <a href="{{ url_for('dashboard') }}" class="btn-cf btn-subtle">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

@@ -1,13 +1,111 @@
-<!-- login.html -->
-{% extends "base.html" %}
-{% block content %}
-<div class="container mt-5" style="max-width:400px">
-  <h2>Login</h2>
-  <form method="POST">
-    <input class="form-control mb-2" name="email" placeholder="Email" required>
-    <input class="form-control mb-2" type="password" name="password" placeholder="Password" required>
-    <button class="btn btn-primary w-100">Login</button>
-  </form>
-  <a href="{{ url_for('register') }}">Register</a>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log in — MiniNotes</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #F4F5F7;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh;
+      color: #172B4D;
+    }
+    .auth-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 22px; font-weight: 800;
+      color: #172B4D; text-decoration: none;
+      margin-bottom: 28px;
+    }
+    .auth-logo svg { flex-shrink: 0; }
+    .auth-card {
+      background: #fff;
+      border: 1px solid #DFE1E6;
+      border-radius: 6px;
+      padding: 36px 40px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .auth-card h1 {
+      font-size: 20px; font-weight: 700;
+      margin-bottom: 6px; text-align: center;
+    }
+    .auth-card p.sub {
+      font-size: 14px; color: #6B778C;
+      text-align: center; margin-bottom: 24px;
+    }
+    .form-row { margin-bottom: 16px; }
+    label {
+      display: block; font-size: 12px; font-weight: 600;
+      margin-bottom: 5px; color: #172B4D;
+    }
+    input[type="email"], input[type="password"], input[type="text"] {
+      display: block; width: 100%;
+      padding: 9px 12px; font-size: 14px;
+      border: 2px solid #DFE1E6; border-radius: 4px;
+      color: #172B4D; font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus {
+      outline: none; border-color: #0052CC;
+      box-shadow: 0 0 0 2px rgba(0,82,204,0.2);
+    }
+    .btn-login {
+      display: block; width: 100%;
+      padding: 10px; font-size: 15px; font-weight: 600;
+      background: #0052CC; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer;
+      font-family: inherit; margin-top: 20px;
+      transition: background 0.15s;
+    }
+    .btn-login:hover { background: #0747A6; }
+    .auth-footer {
+      text-align: center; font-size: 13px;
+      color: #6B778C; margin-top: 20px;
+    }
+    .auth-footer a { color: #0052CC; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+    .divider-line {
+      border: none; border-top: 1px solid #DFE1E6;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <a href="/landing" class="auth-logo">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="5" fill="#0052CC"/>
+      <path d="M5 18L9 9l4 6 3-4 3 7" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    MiniNotes
+  </a>
+
+  <div class="auth-card">
+    <h1>Log in to MiniNotes</h1>
+    <p class="sub">Welcome back — pick up where you left off.</p>
+
+    <form method="POST">
+      <div class="form-row">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="form-row">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-login">Log in</button>
+    </form>
+
+    <hr class="divider-line">
+
+    <div class="auth-footer">
+      Don't have an account?
+      <a href="{{ url_for('register') }}">Sign up free</a>
+    </div>
+  </div>
+</body>
+</html>

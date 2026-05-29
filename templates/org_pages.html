@@ -1,219 +1,193 @@
 {% extends "base.html" %}
-{% block title %}{{ org.name }} - Knowledge Base{% endblock %}
+{% block title %}{{ org.name }} — MiniNotes{% endblock %}
 
-{% block content %}
-
-<div class="container" style="max-width: 900px;">
-
-    <!-- ===================== CLEAN HERO HEADER ===================== -->
-    <div style="
-        background: url('{{ url_for('static', filename='assets/img/home-bg.jpg') }}') center/cover no-repeat;
-        padding: 70px 20px;
-        color: #222;
-        text-align: center;
-        border-radius: 12px;
-        margin: 40px 0;
-        background-blend-mode: lighten;
-        background-color: rgba(255,255,255,0.75);
-    ">
-        <h1 style="font-weight:700; font-size:32px;">
-            {{ org.name }} Knowledge Base
-        </h1>
-
-        {% if searching %}
-            <p style="font-size:16px; color:#444; margin-top:10px;">
-                Search results for: <b>{{ query }}</b>
-            </p>
-        {% else %}
-            <p style="font-size:16px; color:#555; margin-top:10px;">
-                Find articles, guides, and helpful resources.
-            </p>
-        {% endif %}
-
-        <!-- SEARCH BAR -->
-        <form method="GET" action="/{{ org._id }}" style="max-width:550px; margin:25px auto;">
-            <div class="input-group input-group-lg">
-                <input type="text" class="form-control"
-                       name="q" value="{{ query }}"
-                       placeholder="Search articles..."
-                       style="border-radius:6px 0 0 6px;">
-                <span class="input-group-btn">
-                    <button class="btn btn-primary" style="border-radius:0 6px 6px 0;">
-                        <i class="fa fa-search"></i>
-                    </button>
-                </span>
-            </div>
-        </form>
-    </div>
-
-
-    <!-- ===================== SEARCH STATE ===================== -->
-    {% if searching %}
-        {% if pages|length == 0 %}
-            <div class="alert alert-warning text-center">
-                No articles found for "<b>{{ query }}</b>".
-            </div>
-        {% else %}
-            <h3 style="font-weight:600; margin:20px 0; color:#222;">
-                {{ pages|length }} result{{ pages|length != 1 and "s" or "" }}
-            </h3>
-        {% endif %}
-    {% else %}
-        <h3 style="font-weight:600; margin:20px 0; color:#222;">
-            Latest Articles
-        </h3>
-    {% endif %}
-
-
-
-    <!-- ===================== ARTICLE FEED ===================== -->
-    {% if pages %}
-        {% for page in pages|reverse %}
-        <a href="/{{ org._id }}/page/{{ page.page_id }}" class="kb-card-link">
-
-            <div class="kb-card">
-
-                <!-- HEADER ROW -->
-                <div class="kb-card-header">
-                    <div class="kb-avatar">
-                        {{ (page.author or "A")[0]|upper }}
-                    </div>
-
-                    <div>
-                        <div class="kb-card-title">{{ page.title }}</div>
-
-                        <div class="kb-card-meta">
-                            {% if page.author %}
-                                Owned by <b>{{ page.author }}</b>
-                            {% endif %}
-
-                            • {{ page.timestamp.strftime('%b %d, %Y') if page.timestamp else "Recently" }}
-
-                            {% if page.category %}
-                                • <span class="kb-tag">{{ page.category }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DESCRIPTION -->
-                <div class="kb-card-body">
-                    {{ (page.subtitle or "No description available.")[:250] }}…
-                </div>
-
-                <!-- FOOTER -->
-                <div class="kb-card-footer">
-                    <i class="fa fa-comments-o"></i>
-                    {{ page.comments|length if page.comments else 0 }} comments
-                </div>
-
-            </div>
-        </a>
-        {% endfor %}
-    {% endif %}
-
-
-
-    <!-- ===================== ADD NEW ARTICLE ===================== -->
-    <div class="text-center" style="margin-top:40px;">
-        <a href="/{{ org._id }}/new" class="btn btn-primary btn-lg" style="border-radius:6px;">
-            <i class="fa fa-plus"></i> Create New Article
-        </a>
-    </div>
-
+{% block sidebar %}
+<div class="sb-space-header">
+  <div class="sb-space-name">
+    <span class="sb-space-icon">{{ org.name[0]|upper }}</span>
+    {{ org.name }}
+  </div>
+  {% if org.category %}
+  <div class="sb-space-sub">
+    {% if org.category is string %}{{ org.category }}
+    {% else %}{{ org.category | join(', ') }}{% endif %}
+  </div>
+  {% endif %}
 </div>
 
+<div class="sb-divider"></div>
 
+<div class="sb-section">
+  <a href="/{{ org._id }}" class="sb-item active">
+    <i class="fa fa-file-alt"></i> Pages
+  </a>
+  <a href="/{{ org._id }}/new" class="sb-item">
+    <i class="fa fa-plus-circle"></i> Create Page
+  </a>
+</div>
 
-<!-- ===================== LIGHT THEME STYLING ===================== -->
-<style>
+<div class="sb-divider"></div>
 
-body {
-    background: #fafafa !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
+<div class="sb-section">
+  <div class="sb-label">Space Settings</div>
+  <a href="/{{ org._id }}/edit_org" class="sb-item">
+    <i class="fa fa-cog"></i> Space Settings
+  </a>
+  <a href="/" class="sb-item">
+    <i class="fa fa-home"></i> All Spaces
+  </a>
+</div>
+{% endblock %}
 
-/* card link reset */
-.kb-card-link {
-    text-decoration:none;
-    color:inherit;
-}
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  <span class="sep">›</span>
+  <span>{{ org.name }}</span>
+</div>
 
-/* main article card */
-.kb-card {
-    background:white;
-    border:1px solid #e5e7eb;
-    padding:22px;
-    margin-bottom:22px;
-    border-radius:10px;
-    box-shadow:0 1px 3px rgba(0,0,0,0.06);
-    transition:0.25s ease;
-}
-.kb-card:hover {
-    transform:translateY(-3px);
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-}
+<!-- Header row -->
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px;">
+  <div>
+    <div class="page-title" style="margin-bottom:4px;">{{ org.name }}</div>
+    {% if org.category %}
+    <div style="font-size:13px; color:var(--c-subtle);">
+      <i class="fa fa-tag" style="margin-right:4px;"></i>
+      {% if org.category is string %}{{ org.category }}
+      {% else %}{{ org.category | join(' · ') }}{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  <a href="/{{ org._id }}/new" class="btn-cf btn-primary">
+    <i class="fa fa-plus"></i> Create Page
+  </a>
+</div>
 
-/* header row */
-.kb-card-header {
-    display:flex;
-    align-items:center;
-    margin-bottom:12px;
-}
+<!-- Search Bar -->
+<form method="GET" action="/{{ org._id }}" style="margin-bottom:24px;">
+  <div style="display:flex; gap:8px; max-width:520px;">
+    <div style="flex:1; position:relative;">
+      <i class="fa fa-search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--c-subtle); font-size:13px;"></i>
+      <input type="text" class="cf-input" name="q" value="{{ query }}"
+             placeholder="Search pages in {{ org.name }}…"
+             style="padding-left:32px;">
+    </div>
+    {% if org.category %}
+    <select class="cf-select" name="category" style="width:180px;">
+      <option value="">All categories</option>
+      {% if org.category is string %}
+        {% for cat in org.category.split(',') %}
+          <option value="{{ cat.strip() }}" {% if category == cat.strip() %}selected{% endif %}>
+            {{ cat.strip() }}
+          </option>
+        {% endfor %}
+      {% else %}
+        {% for cat in org.category %}
+          <option value="{{ cat.strip() }}" {% if category == cat.strip() %}selected{% endif %}>
+            {{ cat.strip() }}
+          </option>
+        {% endfor %}
+      {% endif %}
+    </select>
+    {% endif %}
+    <button type="submit" class="btn-cf btn-primary">Search</button>
+    {% if searching %}
+    <a href="/{{ org._id }}" class="btn-cf btn-subtle">Clear</a>
+    {% endif %}
+  </div>
+</form>
 
-/* avatar */
-.kb-avatar {
-    width:40px;
-    height:40px;
-    border-radius:50%;
-    background:#d6e4ff;
-    color:#2f54eb;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:700;
-    font-size:16px;
-    margin-right:12px;
-}
+<!-- Results header -->
+{% if searching %}
+<div style="margin-bottom:14px; font-size:14px; color:var(--c-subtle);">
+  {% if pages %}
+    <strong>{{ pages|length }}</strong> result{{ 's' if pages|length != 1 else '' }} for
+    {% if query %}"<strong>{{ query }}</strong>"{% endif %}
+    {% if category %}in <span class="loz loz-blue">{{ category }}</span>{% endif %}
+  {% else %}
+    No results for "{{ query }}"{% if category %} in {{ category }}{% endif %}
+  {% endif %}
+</div>
+{% else %}
+<div style="margin-bottom:14px; font-size:14px; color:var(--c-subtle);">
+  <strong>{{ pages|length }}</strong> page{{ 's' if pages|length != 1 else '' }}
+</div>
+{% endif %}
 
-/* title */
-.kb-card-title {
-    font-size:17px;
-    font-weight:600;
-    color:#111;
-}
+<!-- Pages Table -->
+{% if pages %}
+<div class="cf-box">
+  <table class="cf-table">
+    <thead>
+      <tr>
+        <th style="width:42px;">#</th>
+        <th>Title</th>
+        <th>Category</th>
+        <th>Author</th>
+        <th>Status</th>
+        <th>Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for page in pages|reverse %}
+      <tr>
+        <td style="color:var(--c-subtle); font-size:12px;">{{ page.page_id }}</td>
+        <td>
+          <a href="/{{ org._id }}/page/{{ page.page_id }}" style="font-weight:600;">
+            {{ page.title }}
+          </a>
+          {% if page.subtitle %}
+          <div style="font-size:12px; color:var(--c-subtle); margin-top:2px;">
+            {{ page.subtitle[:100] }}{% if page.subtitle|length > 100 %}…{% endif %}
+          </div>
+          {% endif %}
+        </td>
+        <td>
+          {% if page.category %}
+            <span class="loz loz-blue">{{ page.category }}</span>
+          {% else %}
+            <span style="color:var(--c-subtle);">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="author-av">{{ (page.author or 'A')[0]|upper }}</div>
+            <span style="font-size:13px;">{{ page.author or 'Unknown' }}</span>
+          </div>
+        </td>
+        <td>
+          {% if page.status == 'completed' %}
+            <span class="loz loz-green">Done</span>
+          {% else %}
+            <span class="loz loz-yellow">Pending</span>
+          {% endif %}
+        </td>
+        <td style="font-size:12px; color:var(--c-subtle); white-space:nowrap;">
+          {{ page.created_at.strftime('%b %d, %Y') if page.created_at else '—' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
-/* metadata row */
-.kb-card-meta {
-    font-size:13px;
-    color:#666;
-    margin-top:2px;
-}
+{% elif searching %}
+<div class="empty-state">
+  <i class="fa fa-search"></i>
+  <h3>No pages found</h3>
+  <p>Try different search terms or clear the filters.</p>
+  <a href="/{{ org._id }}" class="btn-cf btn-subtle">Show all pages</a>
+</div>
 
-/* tag */
-.kb-tag {
-    background:#eef2ff;
-    color:#3f51b5;
-    padding:2px 6px;
-    border-radius:4px;
-    font-size:11px;
-}
-
-/* description */
-.kb-card-body {
-    font-size:14px;
-    color:#444;
-    margin:10px 0 8px 0;
-    line-height:1.6;
-}
-
-/* footer */
-.kb-card-footer {
-    font-size:12px;
-    color:#777;
-    margin-top:8px;
-}
-
-</style>
-
+{% else %}
+<div class="empty-state">
+  <i class="fa fa-file-alt"></i>
+  <h3>No pages yet</h3>
+  <p>This space is empty. Create the first page to get started.</p>
+  <a href="/{{ org._id }}/new" class="btn-cf btn-primary">
+    <i class="fa fa-plus"></i> Create Page
+  </a>
+</div>
+{% endif %}
 {% endblock %}

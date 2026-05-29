@@ -1,217 +1,246 @@
 {% extends "base.html" %}
-{% block title %}{{ "Edit Page" if page else "New Page" }}{% endblock %}
+{% block title %}{{ "Edit: " + page.title if page else "New Page" }} — {{ org.name }}{% endblock %}
 
-{% block header %}
-
-<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/about-bg.jpg') }}')">
-  <div class="container position-relative px-4 px-lg-5">
-    <div class="row gx-4 gx-lg-5 justify-content-center">
-      <div class="col-12 text-center text-white">
-        <!-- Empty header as requested -->
-      </div>
-    </div>
+{% block sidebar %}
+<div class="sb-space-header">
+  <div class="sb-space-name">
+    <span class="sb-space-icon">{{ org.name[0]|upper }}</span>
+    {{ org.name }}
   </div>
-</header>
+</div>
+
+<div class="sb-divider"></div>
+
+<div class="sb-section">
+  <a href="/{{ org._id }}" class="sb-item">
+    <i class="fa fa-file-alt"></i> Pages
+  </a>
+  <a href="/{{ org._id }}/new" class="sb-item {% if not page %}active{% endif %}">
+    <i class="fa fa-plus-circle"></i> Create Page
+  </a>
+</div>
+
+<div class="sb-divider"></div>
+
+<div class="sb-section">
+  <a href="/{{ org._id }}/edit_org" class="sb-item">
+    <i class="fa fa-cog"></i> Space Settings
+  </a>
+  <a href="/" class="sb-item">
+    <i class="fa fa-home"></i> All Spaces
+  </a>
+</div>
 {% endblock %}
 
-{% block content %}
-
-<div class="container px-4 px-lg-5 mt-5">
-  <form method="POST" id="form">
-    <!-- Title -->
-    <div class="form-group mb-3">
-      <input type="text" class="form-control form-control-plaintext title-input" 
-             name="title" placeholder="Page title" required 
-             value="{{ page.title if page else '' }}">
-    </div>
-
-
-<!-- Subtitle / Headline -->
-<div class="form-group mb-3">
-  <input type="text" class="form-control form-control-plaintext" 
-         name="subtitle" placeholder="Subtitle / Headline"
-         value="{{ page.subtitle if page else '' }}">
-</div>
-
-<!-- Content -->
-<div class="form-group mb-3">
-  <textarea id="content" name="content" class="form-control form-control-plaintext" rows="10" required>
-    {{ page.content if page else '' }}
-  </textarea>
-</div>
-
-  <!-- Category -->
-<label class="form-label">Category/Project:</label>
-
-<div class="dropdown form-group mb-3" style="max-width: 500px;">
-  <input type="text"
-         id="categoryInput"
-         name="category"
-         class="form-control form-control-plaintext"
-         placeholder="Type or select category"
-         autocomplete="off"
-         required
-         value="{{ page.category if page else '' }}"
-         onfocus="showCategoryDropdown()"
-         oninput="filterCategories()">
-
-  <div id="categoryDropdown"
-       class="dropdown-menu w-100 shadow-sm"
-       style="max-height: 200px; overflow-y: auto; display: none;">
-    {% if org.category %}
-      {% set cat_list = org.category.split(',') if org.category is string else org.category %}
-      {% for cat in cat_list %}
-        <button type="button" class="dropdown-item" onclick="selectCategory('{{ cat.strip() }}')">
-          {{ cat.strip() }}
-        </button>
-      {% endfor %}
-    {% endif %}
-  </div>
-</div>
-
-
-<script>
-function showCategoryDropdown() {
-  document.getElementById('categoryDropdown').style.display = 'block';
-}
-
-function hideCategoryDropdown() {
-  setTimeout(() => {
-    document.getElementById('categoryDropdown').style.display = 'none';
-  }, 150);
-}
-
-function selectCategory(value) {
-  document.getElementById('categoryInput').value = value;
-  hideCategoryDropdown();
-}
-
-function filterCategories() {
-  const input = document.getElementById('categoryInput');
-  const filter = input.value.toLowerCase();
-  const dropdown = document.getElementById('categoryDropdown');
-  const items = dropdown.getElementsByClassName('dropdown-item');
-
-  let anyVisible = false;
-  for (let i = 0; i < items.length; i++) {
-    const txtValue = items[i].textContent || items[i].innerText;
-    if (txtValue.toLowerCase().includes(filter)) {
-      items[i].style.display = "block";
-      anyVisible = true;
-    } else {
-      items[i].style.display = "none";
-    }
-  }
-  dropdown.style.display = anyVisible ? "block" : "none";
-}
-</script>
-
+{% block extra_head %}
+<!-- Summernote -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-lite.min.css" rel="stylesheet">
 <style>
-  #categoryDropdown {
-  border-radius: 8px;
-}
-#categoryDropdown .dropdown-item:hover {
-  background-color: #f8f9fa;
-}
+  /* Override Summernote to match Confluence style */
+  .note-editor.note-frame { border: 2px solid var(--c-border) !important; border-radius: 4px !important; }
+  .note-editor.note-frame:focus-within { border-color: var(--c-blue) !important; box-shadow: 0 0 0 2px rgba(0,82,204,0.18) !important; }
+  .note-toolbar { background: var(--c-sidebar) !important; border-bottom: 1px solid var(--c-border) !important; }
+  .note-btn { border-radius: 3px !important; }
+  .note-editable { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; font-size: 15px !important; color: var(--c-text) !important; }
 
+  /* Title input styles */
+  .title-field {
+    font-size: 26px !important;
+    font-weight: 700 !important;
+    border: none !important;
+    border-bottom: 2px solid var(--c-border) !important;
+    border-radius: 0 !important;
+    padding: 4px 0 10px !important;
+    color: var(--c-text) !important;
+    width: 100%;
+    background: transparent !important;
+    display: block;
+    font-family: inherit;
+  }
+  .title-field:focus {
+    outline: none;
+    border-bottom-color: var(--c-blue) !important;
+    box-shadow: none !important;
+  }
+  .title-field::placeholder { color: #C1C7D0; font-weight: 400; }
+
+  .plain-field {
+    border: none !important;
+    border-bottom: 1px solid var(--c-border) !important;
+    border-radius: 0 !important;
+    padding: 6px 0 8px !important;
+    background: transparent !important;
+    width: 100%;
+    font-size: 15px;
+    color: var(--c-text);
+    display: block;
+    font-family: inherit;
+  }
+  .plain-field:focus {
+    outline: none;
+    border-bottom-color: var(--c-blue) !important;
+    box-shadow: none !important;
+  }
+  .plain-field::placeholder { color: #C1C7D0; }
+
+  .editor-wrap { max-width: 860px; margin: 0 auto; }
+  .editor-form-row { margin-bottom: 20px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 680px) { .meta-grid { grid-template-columns: 1fr; } }
+
+  /* Dropdown */
+  .cat-dropdown-wrap { position: relative; }
+  .cat-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border: 1px solid var(--c-border); border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 180px; overflow-y: auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08); z-index: 50;
+  }
+  .cat-item {
+    padding: 8px 12px; cursor: pointer; font-size: 14px; color: var(--c-text);
+  }
+  .cat-item:hover { background: var(--c-sidebar); }
 </style>
+{% endblock %}
 
-<!-- Status -->
-<label class="form-label">Status:</label>
-<div class="form-group mb-3">
-  <select name="status" class="form-select form-select-plaintext">
-    <option value="pending" {% if page and page.status == "pending" %}selected{% endif %}>Pending</option>
-    <option value="completed" {% if page and page.status == "completed" %}selected{% endif %}>Completed</option>
-  </select>
-</div>
+{% block main_inner %}
+<div style="padding: 24px 40px; max-width: 960px;">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb" style="margin-bottom:20px;">
+    <a href="/">Home</a>
+    <span class="sep">›</span>
+    <a href="/{{ org_id }}">{{ org.name }}</a>
+    <span class="sep">›</span>
+    <span>{{ "Edit Page" if page else "Create Page" }}</span>
+  </div>
 
-<!-- Background Image -->
-<div class="form-group mb-3">
-  <input type="file" class="form-control form-control-plaintext" id="bgimg_file" accept="image/*">
-  <input type="hidden" id="bgimg" name="bgimg" 
-         value="{{ page.bgimg if page and page.bgimg else '' }}">
-</div>
+  <form method="POST" id="page-form">
 
-<button class="btn btn-primary mt-3">{{ "Update Page" if page else "Create Page" }}</button>
+    <div class="editor-wrap">
+      <!-- Title -->
+      <div class="editor-form-row">
+        <input type="text" class="title-field" name="title"
+               placeholder="Page title…" required
+               value="{{ page.title if page else '' }}">
+      </div>
 
+      <!-- Subtitle -->
+      <div class="editor-form-row">
+        <input type="text" class="plain-field" name="subtitle"
+               placeholder="Add a short description or subtitle…"
+               value="{{ page.subtitle if page else '' }}">
+      </div>
 
+      <div class="divider"></div>
+
+      <!-- Content -->
+      <div class="editor-form-row">
+        <textarea id="content" name="content">{{ page.content if page else '' }}</textarea>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Metadata row -->
+      <div class="meta-grid">
+
+        <!-- Category -->
+        <div>
+          <label class="cf-label">Category / Project</label>
+          <div class="cat-dropdown-wrap">
+            <input type="text"
+                   id="categoryInput" name="category"
+                   class="cf-input"
+                   placeholder="Type or pick…"
+                   autocomplete="off" required
+                   value="{{ page.category if page else '' }}"
+                   onfocus="showCatDrop()" oninput="filterCat()">
+            <div class="cat-dropdown" id="catDrop">
+              {% if org.category %}
+                {% set cat_list = org.category.split(',') if org.category is string else org.category %}
+                {% for cat in cat_list %}
+                  <div class="cat-item" onclick="pickCat('{{ cat.strip() }}')">{{ cat.strip() }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="cf-label">Status</label>
+          <select name="status" class="cf-select">
+            <option value="pending"   {% if page and page.status == 'pending'   %}selected{% endif %}>Pending</option>
+            <option value="completed" {% if page and page.status == 'completed' %}selected{% endif %}>Done</option>
+          </select>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <label class="cf-label">Tags <span style="font-weight:400; color:var(--c-subtle);">(comma-separated)</span></label>
+          <input type="text" class="cf-input" name="tags"
+                 placeholder="e.g. backend, api, docs"
+                 value="{{ page.tags if page else '' }}">
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button type="submit" class="btn-cf btn-primary">
+          <i class="fa fa-save"></i> {{ "Update Page" if page else "Publish Page" }}
+        </button>
+        <a href="/{{ org_id }}" class="btn-cf btn-subtle">Cancel</a>
+      </div>
+
+    </div><!-- /editor-wrap -->
   </form>
 </div>
+{% endblock %}
 
-<!-- Summernote and Image Upload JS -->
-
-
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-
-<link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-lite.min.css" rel="stylesheet">
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-lite.min.js"></script>
-
 <script>
-$(document).ready(function() {
-    console.log("Summernote exists?", $.fn.summernote);
+$(function() {
+  $('#content').summernote({
+    height: 420,
+    toolbar: [
+      ['style',  ['style']],
+      ['font',   ['bold','italic','underline','strikethrough','clear']],
+      ['color',  ['color']],
+      ['para',   ['ul','ol','paragraph']],
+      ['table',  ['table']],
+      ['insert', ['link','hr']],
+      ['view',   ['fullscreen','codeview']]
+    ],
+    styleTags: ['p','h1','h2','h3','h4','blockquote','pre'],
+    placeholder: 'Start writing your page content…'
+  });
+});
 
-    $('#content').summernote({
-        height: 400
-    });
+function showCatDrop() {
+  document.getElementById('catDrop').style.display = 'block';
+}
+function pickCat(val) {
+  document.getElementById('categoryInput').value = val;
+  setTimeout(() => { document.getElementById('catDrop').style.display = 'none'; }, 100);
+}
+function filterCat() {
+  const q = document.getElementById('categoryInput').value.toLowerCase();
+  const drop = document.getElementById('catDrop');
+  const items = drop.querySelectorAll('.cat-item');
+  let any = false;
+  items.forEach(el => {
+    const match = el.textContent.toLowerCase().includes(q);
+    el.style.display = match ? 'block' : 'none';
+    if (match) any = true;
+  });
+  drop.style.display = any ? 'block' : 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.cat-dropdown-wrap'))
+    document.getElementById('catDrop').style.display = 'none';
 });
 </script>
-
-
-<style>
-  #form {
-    margin: 20px auto;
-    width: 100%;
-    max-width: none;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
-
-  .title-input {
-    font-size: 2.5rem;
-    font-weight: bold;
-    padding: 10px 0;
-  }
-
-  /* Confluence-style input: no borders, subtle underline on focus */
-  .form-control-plaintext {
-    border: none;
-    background-color: transparent;
-    border-bottom: 1px solid #ddd;
-    border-radius: 0;
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .form-control-plaintext:focus {
-    outline: none;
-    border-bottom: 2px solid #0d6efd;
-    background-color: transparent;
-    box-shadow: none;
-  }
-
-  .form-select-plaintext {
-    border: none;
-    background-color: transparent;
-    border-bottom: 1px solid #ddd;
-    border-radius: 0;
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .form-select-plaintext:focus {
-    outline: none;
-    border-bottom: 2px solid #0d6efd;
-    box-shadow: none;
-  }
-
-  @media (min-width: 992px) {
-      header.masthead {
-          padding-top: 3rem;
-          padding-bottom: 1rem;
-      }
-  }
-</style>
-
 {% endblock %}
