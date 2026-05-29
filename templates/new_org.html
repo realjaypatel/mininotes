@@ -96,5 +96,24 @@
     </div>
   </div>
 
+{% if org and session.user_id == org.user_id|string %}
+<div style="margin-top:28px;" class="cf-box">
+  <div class="cf-box-header" style="color:#BF2600;">
+    <span><i class="fa fa-exclamation-triangle" style="margin-right:8px;"></i>Danger Zone</span>
+  </div>
+  <div class="cf-box-body">
+    <p style="font-size:14px; color:var(--c-subtle); margin-bottom:14px;">
+      Permanently delete this space and all its pages. This cannot be undone.
+    </p>
+    <form method="POST" action="/{{ org._id }}/delete_org"
+          onsubmit="return confirm('Delete space \'{{ org.name }}\' and ALL its pages? This cannot be undone.');">
+      <button type="submit" class="btn-cf btn-danger btn-sm">
+        <i class="fa fa-trash"></i> Delete this Space
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
 </div>
 {% endblock %}

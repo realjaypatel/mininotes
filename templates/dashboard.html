@@ -4,7 +4,10 @@
 {% block sidebar %}
 <div class="sb-section">
   <div class="sb-label">Navigation</div>
-  <a href="/" class="sb-item active"><i class="fa fa-home"></i> Home</a>
+  <a href="/" class="sb-item active">
+    <i class="fa fa-home"></i>
+    <span class="sb-item-text">Home</span>
+  </a>
 </div>
 
 {% if orgs %}
@@ -13,10 +16,10 @@
   <div class="sb-label">Your Spaces</div>
   {% for org in orgs %}
   <a href="/{{ org._id }}" class="sb-item">
-    <span class="sb-space-icon" style="background:{{ loop.cycle('#0052CC','#00875A','#6554C0','#FF5630','#FF991F') }}; border-radius:4px; width:18px; height:18px; font-size:10px;">
+    <span class="sb-space-icon" style="background:{{ loop.cycle('#0052CC','#00875A','#6554C0','#FF5630','#FF991F') }}; width:18px; height:18px; font-size:10px;">
       {{ org.name[0]|upper }}
     </span>
-    {{ org.name }}
+    <span class="sb-item-text">{{ org.name }}</span>
   </a>
   {% endfor %}
 </div>
@@ -24,54 +27,63 @@
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-title" style="margin-bottom:8px;">Home</div>
-<p style="color:var(--c-subtle); margin-bottom:28px;">Your knowledge base hub — all your spaces in one place.</p>
+<!-- Header -->
+<div class="page-title" style="margin-bottom:6px;">Home</div>
+<p style="color:var(--c-subtle); margin-bottom:32px; font-size:14px;">
+  Your knowledge base hub — all spaces in one place.
+</p>
 
-<!-- Spaces Section -->
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-  <h2 style="font-size:18px; font-weight:700;">Your Spaces</h2>
-  <a href="{{ url_for('add_org') }}" class="btn-cf btn-primary">
+<!-- ── SPACES ──────────────────────────────────── -->
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+  <h2 style="font-size:17px; font-weight:700;">Your Spaces</h2>
+  <a href="{{ url_for('add_org') }}" class="btn-cf btn-primary btn-sm">
     <i class="fa fa-plus"></i> New Space
   </a>
 </div>
 
 {% if orgs %}
-<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; margin-bottom:40px;">
   {% for org in orgs %}
   {% set color = loop.cycle('#0052CC','#00875A','#6554C0','#FF5630','#FF991F','#008DA6') %}
-  <div class="cf-box" style="display:flex; flex-direction:column; overflow:hidden;">
-    <!-- Color bar -->
-    <div style="height:5px; background:{{ color }};"></div>
-    <div style="padding:16px 18px;">
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+  <div class="cf-box" style="overflow:hidden; display:flex; flex-direction:column;">
+    <div style="height:4px; background:{{ color }};"></div>
+    <div style="padding:16px 18px; flex:1; display:flex; flex-direction:column; gap:10px;">
+      <!-- Name row -->
+      <div style="display:flex; align-items:center; gap:10px;">
         <div style="width:36px; height:36px; border-radius:6px; background:{{ color }};
                     display:flex; align-items:center; justify-content:center;
                     color:#fff; font-weight:700; font-size:16px; flex-shrink:0;">
           {{ org.name[0]|upper }}
         </div>
-        <div>
-          <a href="/{{ org._id }}" style="font-size:15px; font-weight:700; color:var(--c-text);">
+        <div style="min-width:0;">
+          <a href="/{{ org._id }}" style="font-size:15px; font-weight:700; color:var(--c-text);
+                                          display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
             {{ org.name }}
           </a>
-          {% if org.category %}
           <div style="font-size:12px; color:var(--c-subtle); margin-top:2px;">
-            {{ (org.category | join(', '))[:50] if org.category is iterable and org.category is not string else org.category }}
+            {{ org.page_count }} page{{ 's' if org.page_count != 1 else '' }}
+            {% if org.users %}· {{ org.users|length }} member{{ 's' if org.users|length != 1 else '' }}{% endif %}
           </div>
-          {% endif %}
         </div>
       </div>
 
-      {% if org.users %}
-      <div style="font-size:12px; color:var(--c-subtle); margin-bottom:12px;">
-        <i class="fa fa-users" style="margin-right:5px;"></i>
-        {{ org.users | join(', ') }}
+      <!-- Categories -->
+      {% if org.category %}
+      <div style="display:flex; flex-wrap:wrap; gap:4px;">
+        {% set cats = org.category.split(',') if org.category is string else org.category %}
+        {% for cat in cats[:3] %}
+          <span class="loz loz-blue">{{ cat.strip() }}</span>
+        {% endfor %}
+        {% if cats|length > 3 %}
+          <span class="loz loz-grey">+{{ cats|length - 3 }}</span>
+        {% endif %}
       </div>
       {% endif %}
 
-      <div style="display:flex; gap:8px; align-items:center;">
-        <a href="/{{ org._id }}" class="btn-cf btn-subtle btn-sm">
-          <i class="fa fa-folder-open"></i> Open Space
+      <!-- Actions -->
+      <div style="display:flex; gap:8px; margin-top:auto;">
+        <a href="/{{ org._id }}" class="btn-cf btn-subtle btn-sm" style="flex:1; justify-content:center;">
+          <i class="fa fa-folder-open"></i> Open
         </a>
         <a href="/{{ org._id }}/edit_org" class="btn-cf btn-subtle btn-sm">
           <i class="fa fa-cog"></i>
@@ -83,13 +95,79 @@
 </div>
 
 {% else %}
-<div class="empty-state">
+<div class="empty-state" style="margin-bottom:40px;">
   <i class="fa fa-layer-group"></i>
   <h3>No spaces yet</h3>
   <p>Spaces are where your team's knowledge lives. Create your first one to get started.</p>
   <a href="{{ url_for('add_org') }}" class="btn-cf btn-primary">
     <i class="fa fa-plus"></i> Create a Space
   </a>
+</div>
+{% endif %}
+
+<!-- ── RECENTLY UPDATED ─────────────────────────── -->
+{% if recent_pages %}
+<div class="divider"></div>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+  <h2 style="font-size:17px; font-weight:700;">Recently Updated</h2>
+</div>
+
+<div class="cf-box">
+  <div class="table-scroll">
+    <table class="cf-table">
+      <thead>
+        <tr>
+          <th>Page</th>
+          <th>Space</th>
+          <th>Author</th>
+          <th>Status</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for page in recent_pages %}
+        <tr>
+          <td>
+            <a href="/{{ page.org_id }}/page/{{ page.page_id }}" style="font-weight:600;">
+              {{ page.title }}
+            </a>
+            {% if page.subtitle %}
+            <div style="font-size:12px; color:var(--c-subtle); margin-top:2px;">
+              {{ page.subtitle[:80] }}{% if page.subtitle|length > 80 %}…{% endif %}
+            </div>
+            {% endif %}
+          </td>
+          <td style="white-space:nowrap;">
+            {% if page.org %}
+            <a href="/{{ page.org_id }}" style="color:var(--c-subtle); font-size:13px;">
+              {{ page.org.name }}
+            </a>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex; align-items:center; gap:7px;">
+              <div class="author-av">{{ (page.author or 'A')[0]|upper }}</div>
+              <span style="font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">
+                {{ (page.author or 'Unknown').split('@')[0] }}
+              </span>
+            </div>
+          </td>
+          <td>
+            {% if page.status == 'completed' %}
+              <span class="loz loz-green">Done</span>
+            {% else %}
+              <span class="loz loz-yellow">Pending</span>
+            {% endif %}
+          </td>
+          <td style="font-size:12px; color:var(--c-subtle); white-space:nowrap;">
+            {% set ts = page.updated_at or page.created_at %}
+            {{ ts.strftime('%b %d, %Y') if ts else '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

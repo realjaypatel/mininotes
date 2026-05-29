@@ -91,6 +91,12 @@
     <h1>Create your account</h1>
     <p class="sub">Free forever. No credit card needed.</p>
 
+    {% if error %}
+    <div style="background:#FFEBE6; border:1px solid #FF8F73; border-radius:4px;
+                padding:10px 14px; font-size:13px; color:#BF2600; margin-bottom:16px;">
+      <i class="fa fa-exclamation-circle" style="margin-right:6px;"></i>{{ error }}
+    </div>
+    {% endif %}
     <form method="POST">
       <div class="form-row">
         <label for="email">Work email</label>
